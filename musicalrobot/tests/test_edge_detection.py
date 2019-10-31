@@ -37,7 +37,7 @@ from scipy.signal import find_peaks
 
 def test_input_file():
     '''Test for function which loads the input file'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     assert isinstance(frames, np.ndarray),'Output is not an array'
     return
@@ -45,24 +45,24 @@ def test_input_file():
 def test_flip_frame():
     '''Test for function which flips the frames horizontally
        and vertically to correct for the mirroring during recording.'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
+        crop_frame.append(frame[35:85,40:120])
     flip_frames = edge_detection.flip_frame(crop_frame)
     assert isinstance(flip_frames,list),'Output is not a list'
     return
 
 def test_edge_detection():
     ''' Test for function which detects edges,fills and labels the samples'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
+        crop_frame.append(frame[35:85,40:120])
     flip_frames = edge_detection.flip_frame(crop_frame)
-    n_samples = 5
+    n_samples = 9
     labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
     assert isinstance(labeled_samples, np.ndarray),'Output is not an array'
     assert flip_frames[0].shape == labeled_samples.shape,'Input and Output array shapes are different.'
@@ -71,72 +71,114 @@ def test_edge_detection():
 def test_regprop():
     '''Test for function which determines centroids of all the samples
     and locations on the plate to obtain temperature from'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
+        crop_frame.append(frame[35:85,40:120])
     flip_frames = edge_detection.flip_frame(crop_frame)
-    n_samples = 5; n_rows = 1; n_columns = 5
+    n_samples = 9; n_rows = 3; n_columns = 3
     labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples,flip_frames,n_samples,n_rows,n_columns)
+    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
     assert isinstance(regprops,dict),'Output is not a dictionary'
     assert len(regprops)==len(flip_frames),'The number of dataframes in the dictionary is not equal to number of frames input.'
     for i in range(len(flip_frames)):
         assert len(regprops[i])==n_samples,'Wrong number of samples detected'
     return
 
-def test_sample_temp():
-    '''Test for function which obtaines temperature of samples and plate temperature'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+def test_sort_regprops():
+    '''Test for function which sorts the dataframes in the dictionary regprops'''
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
+        crop_frame.append(frame[35:85,40:120])
     flip_frames = edge_detection.flip_frame(crop_frame)
-    n_samples = 5; n_rows = 1; n_columns = 5
+    n_samples = 9; n_rows = 3; n_columns = 3
     labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples,flip_frames,n_samples,n_rows,n_columns)
-    temp, plate_temp = edge_detection.sample_temp(regprops,flip_frames)
+    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
+    assert isinstance(sorted_regprops,dict),'Output is not a dictionary'
+    assert len(sorted_regprops)==len(flip_frames),'The number of dataframes in the dictionary is not equal to number of frames input.'
+    for i in range(len(flip_frames)):
+        assert len(sorted_regprops[i])==n_samples,'Wrong number of samples detected'
+    return
+
+
+def test_sample_temp():
+    '''Test for function which obtaines temperature of samples and plate temperature'''
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    frames = edge_detection.input_file(file_name)
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    flip_frames = edge_detection.flip_frame(crop_frame)
+    n_samples = 9; n_rows = 3; n_columns = 3
+    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops,flip_frames)
     assert isinstance(temp,list),'Sample temperature output is not a list'
     assert isinstance(plate_temp,list),'Plate temperature output is not a list'
     assert len(temp) == n_samples,'Temperature obtained for wrong number of samples'
     assert len(plate_temp) == n_samples,'Temperature obtained for wrong number of plate locations'
     return
 
-def test_inflection_point():
-    '''Test for function which determines inflection point(melting point)'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+def test_sample_peaks():
+    ''' Test for function which obtains the peaks in the sample temperature profile'''
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
+        crop_frame.append(frame[35:85,40:120])
     flip_frames = edge_detection.flip_frame(crop_frame)
-    n_samples = 5; n_rows = 1; n_columns = 5
+    n_samples = 9; n_rows = 3; n_columns = 3
     labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples,flip_frames,n_samples,n_rows,n_columns)
-    s_temp, p_temp = edge_detection.sample_temp(regprops,flip_frames)
-    inf_temp, s_peaks, p_peaks = edge_detection.inflection_point(s_temp, p_temp)
-    assert isinstance(inf_temp, list),'Output is not a list'
-    assert isinstance(s_peaks, list),'Output is not a list'
-    assert isinstance(p_peaks, list),'Output is not a list'
-    assert len(inf_temp) == n_samples,'Wrong number of samples detected'
+    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, flip_frames)
+    s_peaks, s_infl = edge_detection.peak_detection(temp)
+    assert isinstance(s_peaks, list), 'Output is not a list'
+    assert isinstance(s_infl, list), 'Output is not a list'
+    assert len(s_peaks) == n_samples, 'Wrong number of peaks detected'
+    assert len(s_infl) == n_samples, 'Wrong number of inflection temperatures detected'
+    return
+
+
+def test_inflection_point():
+    '''Test for function which obtains the melting point of all the samples'''
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    frames = edge_detection.input_file(file_name)
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    flip_frames = edge_detection.flip_frame(crop_frame)
+    n_samples = 9; n_rows = 3; n_columns = 3
+    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, flip_frames)
+    s_peaks, s_infl = edge_detection.peak_detection(temp)
+    p_peaks, p_infl = edge_detection.peak_detection(plate_temp)
+    inf_temp = edge_detection.inflection_point(temp, plate_temp, s_peaks, p_peaks)
+    assert isinstance(inf_temp, list), 'Output is not a list'
+    assert len(inf_temp) == n_samples, 'Wrong number of melting points determined'
     return
 
 def test_inflection_temp():
     '''Test for wrapping function'''
-    file_name = ('../musical-robot/musicalrobot/data/PPA_Melting_6_14_19.tiff')
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     frames = edge_detection.input_file(file_name)
     crop_frame = []
     for frame in frames:
-        crop_frame.append(frame[40:100])
-    n_samples = 5; n_rows = 1; n_columns = 5
-    flip_frames, regprops, s_temp, p_temp, inf_temp, m_df = edge_detection.inflection_temp(crop_frame,n_samples,n_rows,n_columns)
+        crop_frame.append(frame[35:85,40:120])
+    n_samples = 9; n_rows = 3; n_columns = 3
+    flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = edge_detection.inflection_temp(crop_frame, n_rows, n_columns)
     assert isinstance(flip_frames,list),'Output is not a list'
     assert isinstance(inf_temp, list),'Output is not a list'
     assert len(inf_temp) == n_samples,'Wrong number of samples detected'
     for i in range(len(flip_frames)):
-        assert len(regprops[i])==n_samples,'Wrong number of samples detected'
+        assert len(sorted_regprops[i])==n_samples,'Wrong number of samples detected'
     assert isinstance(s_temp,list),'Sample temperature output is not a list'
     assert isinstance(p_temp,list),'Plate temperature output is not a list'
     assert len(s_temp) == n_samples,'Temperature obtained for wrong number of samples'

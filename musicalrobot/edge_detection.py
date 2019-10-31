@@ -68,17 +68,24 @@ def edge_detection(frames, n_samples):
     so that they can be used as props to get pixel data from.
     '''
     for size in range(15,9,-1):
-        edges = feature.canny(frames[0]/1400)
-        filled_samples = binary_fill_holes(edges)
-        cl_samples = remove_small_objects(filled_samples,min_size = size)
-        labeled_samples = label(cl_samples)
-        props = regionprops(labeled_samples, intensity_image=frames[0])
+        for thres in range(1500,900,-100):
+            edges = feature.canny(frames[0]/thres)
+            filled_samples = binary_fill_holes(edges)
+            cl_samples = remove_small_objects(filled_samples,min_size = size)
+            labeled_samples = label(cl_samples)
+            props = regionprops(labeled_samples, intensity_image=frames[0])
+            if len(props) == n_samples:
+                break
+#             if thres == 1000 and len(props) != n_samples:
+#                 print('Not all the samples are being recognized with the set threshold range for size ',size) 
         if len(props) == n_samples:
             break
+    if size == 10 and thres == 1000 and len(props) != n_samples:
+        print('Not all the samples are being recognized with the set minimum size and threshold range')
     return labeled_samples
 
 # Function to determine centroids of all the samples
-def regprop(labeled_samples,frames,n_samples,n_rows,n_columns):
+def regprop(labeled_samples, frames, n_rows, n_columns):
     ''' Determines the area and centroid of all samples.
         Args:
         labeled_samples(array): An array with labeled samples.
@@ -92,8 +99,9 @@ def regprop(labeled_samples,frames,n_samples,n_rows,n_columns):
         frame of the video.
     '''
     regprops = {}
+    n_samples = n_rows * n_columns
     unique_index = random.sample(range(100),n_samples)
-    for i in range(len(frames)):
+    for i in range(len(frames)): 
         props = regionprops(labeled_samples, intensity_image=frames[i])
         # Initializing arrays for all sample properties obtained from regprops.
         row = np.zeros(len(props)).astype(int)
@@ -122,6 +130,19 @@ def regprop(labeled_samples,frames,n_samples,n_rows,n_columns):
         if len(regprops[i]) != n_samples:
             print('Wrong number of samples are being detected in frame %d' %i)    
         regprops[i].sort_values(['Column','Row'],inplace=True)
+    return regprops
+   
+def sort_regprops(regprops, n_columns, n_rows):
+    '''
+    Function to sort the regprops to match the order in which the samples
+    are pipetted.
+    Args:
+    regprops(dict): A dictionary of dataframes containing information about the sample.
+    n_columns: Number of columns of samples
+    n_rows: Number of rows of samples
+    '''
+    sorted_regprops = {}
+    n_samples = n_columns * n_rows
     # After sorting the dataframe according by columns in ascending order.
     sorted_rows = []
     # Sorting the dataframe according to the row coordinate in each column.
@@ -136,15 +157,15 @@ def regprop(labeled_samples,frames,n_samples,n_rows,n_columns):
     reorder_index = regprops[0].unique_index
     for k in range(0,len(regprops)):
         regprops[k].set_index('unique_index',inplace=True)
-        regprops[k] = regprops[k].reindex(reorder_index)
-    return regprops
+        sorted_regprops[k] = regprops[k].reindex(reorder_index)
+    return sorted_regprops
 
 # Function to obtain temperature of samples and plate temp
-def sample_temp(regprops,frames):
+def sample_temp(sorted_regprops,frames):
     ''' Function to concatenate all the obtained temperature data
         from the pixel values into lists.
         Args:
-        regprops(dictionary): The dictionary of dataframes containing temperature data.
+        sorted_regprops(dictionary): The dictionary of sorted dataframes containing temperature data.
         frames(array): The array of frames to be processed to obtain temperature data.
         Returns:
         temp(list): Temperature of all the samples in every frame of the video.
@@ -153,33 +174,30 @@ def sample_temp(regprops,frames):
     '''
     temp = []
     plate_temp = []
-    for j in range(len(regprops[1])):
+    for j in range(len(sorted_regprops[1])):
         temp_well = []
         plate_well_temp = []
         for i in range(len(frames)):
-            temp_well.append(centikelvin_to_celsius(list(regprops[i]['Sample_temp(cK)'])[j]))
-            plate_well_temp.append(centikelvin_to_celsius(list(regprops[i]['Plate_temp(cK)'])[j]))
+            temp_well.append(centikelvin_to_celsius(list(sorted_regprops[i]['Sample_temp(cK)'])[j]))
+            plate_well_temp.append(centikelvin_to_celsius(list(sorted_regprops[i]['Plate_temp(cK)'])[j]))
         temp.append(temp_well)
         plate_temp.append(plate_well_temp)
     return temp,plate_temp
 
 # Function to obtain melting point by extracting the inflection point
-def inflection_point(s_temp,p_temp):
+def peak_detection(temp_profiles):
     '''Function to determine inflection point in the sample temperature
     profile(melting point)
     Args:
-    s_temp(list): Temperature of all the samples in every frame of the video.
-    p_temp(list): Temperature of the plate next to every sample in every
-        frame of the video.
+    temp(list): Temperature of all the samples or plate locations in every frame of the video.
     Returns:
-    inf_temp(list): List of temperature at inflection points for each sample
+    peaks(list): List of two highest peak(inflection points) indices in the
+    given temperature profiles.
+    infl(list):  List of temperature at inflection points for given temperature profiles.
     '''
-    s_infl = []
-    p_infl = []
-    s_peaks = []
-    p_peaks = []
-    inf_peak = [] ; inf_temp = []
-    for temp in s_temp:
+    infl = []
+    peak_indices = []
+    for temp in temp_profiles:
         frames = np.linspace(1,len(temp),len(temp))
         # Fitting a spline to the temperature profile of the samples.
         bspl = BSpline(frames,temp,k=3)
@@ -190,7 +208,7 @@ def inflection_point(s_temp,p_temp):
         # Calculating derivative
         derivative = gradient[:,1]/gradient[:,0]
         # Finding peaks in the derivative plot.
-        peaks, properties = find_peaks(derivative,height=0.1)
+        peaks, properties = find_peaks(derivative,height=0)
         max_height1 = np.max(properties['peak_heights'])
         # To find the second highest peak
         a = list(properties['peak_heights'])
@@ -200,40 +218,43 @@ def inflection_point(s_temp,p_temp):
         inf_index1 = list(properties['peak_heights']).index(max_height1)
         inf_index2 = list(properties['peak_heights']).index(max_height2)
         # Appending the frame number in which these peaks occur to a list
-        s_peaks.append([peaks[inf_index1],peaks[inf_index2]])
+        peak_indices.append([peaks[inf_index1],peaks[inf_index2]])
         # Appending the temperature at the peaks.
-        s_infl.append([temp[peaks[inf_index1]],temp[peaks[inf_index2]]])
-    for temp in p_temp:
-        frames = np.linspace(1,len(temp),len(temp))
-        bspl = BSpline(frames,temp,k=3)
-        gradient_array = np.column_stack((frames,bspl(frames)))
-        gradient = np.gradient(gradient_array,axis=0)
-        derivative = gradient[:,1]/gradient[:,0]
-        peaks, properties = find_peaks(derivative,height=0.1)
-        max_height1 = np.max(properties['peak_heights'])
-        # To find the second highest peak
-        a = list(properties['peak_heights'])
-        a.remove(max_height1)
-        max_height2 = np.max(a)
-        inf_index1 = list(properties['peak_heights']).index(max_height1)
-        inf_index2 = list(properties['peak_heights']).index(max_height2)
-        p_peaks.append([peaks[inf_index1],peaks[inf_index2]])
-        p_infl.append([temp[peaks[inf_index1]],temp[peaks[inf_index2]]])
+        infl.append([temp[peaks[inf_index1]],temp[peaks[inf_index2]]])
+    return peak_indices, infl
+    
+
+def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
+    '''
+    Function to get the inflection point(melting point) for each sample.
+    Args:
+    s_temp(list): Sample temperature profiles
+    p_temp(list): Plate location temperature profiles
+    s_peaks(list): List of two highest peak(inflection points) indices in the
+    temperature profile of the samples.
+    p_peaks(list): List of two highest peak(inflection points) indices in the
+    temperature profile of the plate.
+    Returns:
+    inf_temp(list): List of temperature at inflection points for each sample
+    '''
+    inf_peak = [] ; inf_temp = []
     for i,peaks in enumerate(s_peaks):
         for peak in peaks:
+            # Making sure the peak is present only in the sample temp profile
             if abs(peak - p_peaks[i][0]) >= 3:
                 inf_peak.append(peak)
                 break
             else:
                 pass
+    # Appending the temperature of the sample at the inflection point
     for i,temp in enumerate(s_temp):
         inf_temp.append(temp[inf_peak[i]])
-    return inf_temp, s_peaks, p_peaks
+    return inf_temp
 
 
 #### Wrapping functions ######
 # Wrapping function to get the inflection point
-def inflection_temp(frames,n_samples,n_rows,n_columns):
+def inflection_temp(frames ,n_rows, n_columns):
     ''' Function to obtain sample temperature and plate temperature
         in every frame of the video using edge detection.
     Args:
@@ -254,6 +275,9 @@ def inflection_temp(frames,n_samples,n_rows,n_columns):
         m_df(Dataframe): A dataframe containing row and column coordinates of each sample 
         and its respective inflection point obtained.
     '''
+
+    # Determining the number of samples
+    n_samples = n_columns * n_rows
     # Use the function 'flip_frame' to flip the frames horizontally 
     #and vertically to correct for the mirroring during recording
     flip_frames = flip_frame(frames)
@@ -261,13 +285,21 @@ def inflection_temp(frames,n_samples,n_rows,n_columns):
     # label the samples.
     labeled_samples = edge_detection(flip_frames, n_samples)
     # Use the function 'regprop' to determine centroids of all the samples
-    regprops = regprop(labeled_samples,flip_frames,n_samples,n_rows,n_columns)
+    regprops = regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    # Use the function 'sort_regprops' to sort the dataframes in regprops
+    sorted_regprops = sort_regprops(regprops, n_columns, n_rows)
     # Use the function 'sample_temp' to obtain temperature of samples 
     # and plate temp
-    s_temp, p_temp = sample_temp(regprops,flip_frames)
+    s_temp, p_temp = sample_temp(sorted_regprops,flip_frames)
+    # Use the function 'sample_peaks' to determine the inflections points
+    # and temperatures in sample temperature profiles
+    s_peaks, s_infl = peak_detection(s_temp)
+    # Use the function 'plate_peaks' to determine the inflections 
+    # in plate temperature profiles
+    p_peaks, p_infl = peak_detection(p_temp)
     # Use the function 'infection_point' to obtain melting point of samples
-    inf_temp, s_peaks, p_peaks = inflection_point(s_temp,p_temp)
+    inf_temp = inflection_point(s_temp,p_temp, s_peaks, p_peaks)
     # Creating a dataframe with row and column coordinates of sample centroid and its
     # melting temperature (Inflection point).
     m_df = pd.DataFrame({'Row':regprops[0].Row,'Column':regprops[0].Column,'Melting point':inf_temp})
-    return flip_frames, regprops, s_temp, p_temp, inf_temp, m_df
+    return flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df

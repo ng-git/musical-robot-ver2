@@ -34,7 +34,11 @@ from scipy.signal import find_peaks
 
 def test_image_eq():
     ''' Test for fucntion which equalizes a low contrast image'''
-    pixel_frames = edge_detection.input_file('../musical-robot/musicalrobot/data/CHCl_CA_DES_5_31_19.tiff')
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
     n_frames = len(pixel_frames)
     img_eq = pixel_analysis.image_eq(n_frames,pixel_frames)
     assert isinstance(img_eq,np.ndarray),'Output is not an array'
@@ -43,7 +47,11 @@ def test_image_eq():
 
 def test_pixel_sum():
     '''Test for function which obtains the sum of pixels over all rows and columns'''
-    pixel_frames = edge_detection.input_file('../musical-robot/musicalrobot/data/CHCl_CA_DES_5_31_19.tiff')
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
     n_frames = len(pixel_frames)
     img_eq = pixel_analysis.image_eq(n_frames,pixel_frames)
     column_sum, row_sum = pixel_analysis.pixel_sum(img_eq)
@@ -56,26 +64,57 @@ def test_pixel_sum():
 def test_peak_values():
     '''Test for function which finds peaks from the column_sum and row_sum arrays
         and return a dataframe with sample locations and plate locations.'''
-    pixel_frames = edge_detection.input_file('../musical-robot/musicalrobot/data/CHCl_CA_DES_5_31_19.tiff')
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
     n_frames = len(pixel_frames)
     img_eq = pixel_analysis.image_eq(n_frames,pixel_frames)
     column_sum, row_sum = pixel_analysis.pixel_sum(img_eq)
-    n_columns = 12
-    n_rows = 8
-    sample_location = pixel_analysis.peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    n_columns = 3
+    n_rows = 3
+    r_peaks, c_peaks = pixel_analysis.peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    assert isinstance(r_peaks, list), 'Output is not a list'
+    assert isinstance(c_peaks, list), 'Output is not a list'
+    assert len(r_peaks) == n_rows, 'Wrong number of sample rows detected'
+    assert len(c_peaks) == n_columns, 'Wrong number of sample columns detected'
+    return
+
+def test_locations():
+    '''Test for functin which returns a dataframe containing row and column
+    locations of samples and their respective plate location at which temperature
+    profiles are monitored'''
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
+    n_frames = len(pixel_frames)
+    img_eq = pixel_analysis.image_eq(n_frames,pixel_frames)
+    column_sum, row_sum = pixel_analysis.pixel_sum(img_eq)
+    n_columns = 3
+    n_rows = 3
+    r_peaks, c_peaks = pixel_analysis.peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    sample_location = pixel_analysis.locations(r_peaks, c_peaks, img_eq)
     assert isinstance(sample_location,pd.DataFrame),'Output is not a dataframe'
     assert len(sample_location)==n_columns*n_rows, 'Wrong number of sample locations are present'
     return
 
 def test_pixel_intensity():
     '''Test for function which determines sample temperature and plate temperature'''
-    pixel_frames = edge_detection.input_file('../musical-robot/musicalrobot/data/CHCl_CA_DES_5_31_19.tiff')
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
     n_frames = len(pixel_frames)
     img_eq = pixel_analysis.image_eq(n_frames,pixel_frames)
     column_sum, row_sum = pixel_analysis.pixel_sum(img_eq)
-    n_columns = 12
-    n_rows = 8
-    sample_location = pixel_analysis.peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    n_columns = 3
+    n_rows = 3
+    r_peaks, c_peaks = pixel_analysis.peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    sample_location = pixel_analysis.locations(r_peaks, c_peaks, img_eq)
     x_name = 'Row'
     y_name = 'Column'
     plate_name = 'plate_location'
@@ -88,10 +127,14 @@ def test_pixel_intensity():
 
 def test_pixel_temp():
     '''Test for the wrapping function'''
-    pixel_frames = edge_detection.input_file('../musical-robot/musicalrobot/data/CHCl_CA_DES_5_31_19.tiff')
+    frames = edge_detection.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    pixel_frames = edge_detection.flip_frame(crop_frame)
     n_frames = len(pixel_frames)
-    n_columns = 12
-    n_rows = 8
+    n_columns = 3
+    n_rows = 3
     m_df = pixel_analysis.pixel_temp(pixel_frames,n_frames,n_columns,n_rows)
     assert isinstance(m_df,pd.DataFrame),'Output obtained is not a dataframe'
     assert len(m_df)==n_columns*n_rows,'Temperature obtained for wrong number of samples'

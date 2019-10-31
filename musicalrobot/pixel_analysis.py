@@ -17,6 +17,7 @@ from skimage.measure import regionprops
 from skimage.exposure import equalize_adapthist
 from skimage.morphology import remove_small_objects  
 from scipy.signal import find_peaks
+from skimage.restoration import denoise_tv_chambolle
 from irtemp import centikelvin_to_celsius
 from edge_detection import inflection_point
 
@@ -48,31 +49,40 @@ def image_eq(n_frames,frames):
     return img_eq
 
 # Function to obtain sum of pixels over all the rows and columns
-def pixel_sum(frame):
+def pixel_sum(img_eq):
     ''' Funtion to determine sum of pixels over all the rows and columns
         to obtain plots with peaks at the sample position in the array.
         Args:
-        frame(array):Equalized image 
+        img_eq(array):Equalized image 
         Returns:
         column_sum: Sum of pixels over all the columns
         row_sum: Sum of pixels over all the rows
         Also returns plots of column sum and row sum.
     '''
+    
+    # Denoising the image
+    frame = denoise_tv_chambolle(img_eq)
     rows = frame.shape[0]
     columns = frame.shape[1]
-    column_sum = []
+    # Adding all the pixels in each column of the equalized image 
+    column_sum = []        
     for i in range(0,columns):
         column_sum.append(sum(frame[:,i]))
+    # Adding all the rows in each column of the equalized image 
     row_sum = []
     for j in range(0,rows):
         row_sum.append(sum(frame[j,:]))
+    # To convert the troughs to peaks
     column_sum = [x * -1 for x in column_sum]
+    # To convert the troughs to peaks
     row_sum = [x * -1 for x in row_sum]
+    #Plotting the sum of pixel values in each column
     plt.plot(range(len(column_sum)),column_sum)
     plt.xlabel('Column index')
     plt.ylabel('Sum of pixel values over columns')
     plt.title('Sum of pixel values over columns against column index')
     plt.show()
+    #Plotting the sum of pixel values in each row
     plt.plot(range(len(row_sum)),row_sum)
     plt.xlabel('Row index')
     plt.ylabel('Sum of pixel values over rows')
@@ -98,35 +108,75 @@ def peak_values(column_sum,row_sum,n_columns,n_rows,image):
         superimposed on the image to be processed.
         
     '''
-    column_peaks = find_peaks(column_sum,distance=10)
-    column_peaks = column_peaks[0]
-    row_peaks = find_peaks(row_sum,distance=10)
-    row_peaks = row_peaks[0]
+    # Finding peaks in the column sum array
+    all_column_peaks = find_peaks(column_sum, height = (None, 0), distance=7)
+    # Getting column peaks as a list
+    column_indices = list(all_column_peaks[0])
+    # Getting column peak_heights
+    column_heights = list(all_column_peaks[1]['peak_heights'])
+    # Picking the highest peak values equal to the number of sample columns
+    column_peak_indices = []
+    for i in range(n_columns):
+        column_peaks = column_heights.index(max(column_heights))
+        column_peak_indices.append(column_indices[column_peaks])
+        pop_index = column_heights.index(max(column_heights))
+        column_heights.pop(pop_index)
+        column_indices.pop(pop_index)
+    # Sorting column indices in ascending order
+    column_peak_indices.sort()
+    # Finding peaks in the row sum array
+    all_row_peaks = find_peaks(row_sum, height = (None, 0), distance=7)
+    # Getting row peaks as a list
+    row_indices = list(all_row_peaks[0])
+    # Getting peak heights
+    row_heights = list(all_row_peaks[1]['peak_heights'])
+    # Picking the highest peak values equal to the number of sample rows
+    row_peak_indices = []
+    for i in range(n_rows):
+        row_peaks = row_heights.index(max(row_heights))
+        row_peak_indices.append(row_indices[row_peaks])
+        pop_index = row_heights.index(max(row_heights))
+        row_heights.pop(pop_index)
+        row_indices.pop(pop_index)
+    # Sorting row indices in ascending order
+    row_peak_indices.sort()
+    return row_peak_indices, column_peak_indices
+    
+    
+def locations(row_peak_indices, column_peak_indices, image):
+    '''Function to get location of all the samples(row and column) and their
+    respective plate locations. (Same column but different rows)
+    Args:
+    row_peak_indices(list): List containing the location of all the sample rows
+    column_peak_indices(list): List containing the location of all the sample columns.
+    Returns:
+    sample_location (Dataframe): Dataframe containing sample location and plate location.
+    '''
+    # Appending row and column peak values to arrays to get plate location.
     row = []
     column = []
     plate_location = []
-    i = 0
-    j = 0
+    n_columns = len(column_peak_indices)
+    n_rows = len(row_peak_indices)
     for i in range(0,n_columns):
         for j in range(0,n_rows):
-            row.append(row_peaks[j])
-            column.append(column_peaks[i])
+            row.append(row_peak_indices[j])
+            column.append(column_peak_indices[i])
             if j == 0:
+                # Calculating plate location for each well based on the well location.
                 plate_location.append(int((row[j]-0)/2))
             else:
                 plate_location.append(int((row[j] + row[j-1])/2))
-            j = j + 1
-        i = i + 1
-    
-    sample_location = pd.DataFrame(list(zip(row, column, plate_location)),columns =['Row', 'Column','plate_location'])
+    # Dataframe containing the well location(row and column)
+    sample_location = pd.DataFrame(list(zip(row, column, plate_location)),columns =['Row', 'Column', 'plate_location'])
     plt.imshow(image)
-    plt.scatter(sample_location['Column'],sample_location['Row'],s=4)
-    plt.scatter(sample_location['Column'],sample_location['plate_location'],s=4)
+    plt.scatter(sample_location['Column'],sample_location['Row'],s=4,color='Red')
+    plt.scatter(sample_location['Column'],sample_location['plate_location'],s=4,color='Purple')
     plt.title('Sample and plate location at which the temperature profile is monitored')
     plt.show()
     return sample_location
 
-# To determine the samle and plate temperature using peak locations.
+# To determine the sample and plate temperature using peak locations.
 def pixel_intensity(sample_location, frames, x_name, y_name, plate_name):
     ''' Function to find pixel intensity at all sample locations
         and plate locations in each frame.
@@ -140,8 +190,11 @@ def pixel_intensity(sample_location, frames, x_name, y_name, plate_name):
     '''
     temp = []
     plate_temp = []
+    # Row values of the peaks
     x = sample_location[x_name]
+    # Column values of the peaks
     y = sample_location[y_name]
+    # Row value of the plate location
     p = sample_location[plate_name]
     for i in range(len(sample_location)):
         temp_well = []
@@ -175,13 +228,18 @@ def pixel_temp(frames,n_frames,n_columns,n_rows):
     #to obtain plots with peaks at the sample position in the array.
     column_sum,row_sum = pixel_sum(img_eq)
     # Function to find peaks from the column_sum and row_sum arrays
-    # and return a dataframe with sample locations.
-    sample_location = peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    r_peaks, c_peaks = peak_values(column_sum,row_sum,n_columns,n_rows,img_eq)
+    # Function to return a dataframe with sample locations and respective plate locations.
+    sample_location = locations(r_peaks, c_peaks, img_eq)
     # Function to find pixel intensity at all sample locations
     # and plate locations in each frame.
-    temp,plate_temp = pixel_intensity(sample_location, frames, x_name = 'Row', y_name = 'Column', plate_name = 'plate_location')
+    temp, plate_temp = pixel_intensity(sample_location, frames, x_name = 'Row', y_name = 'Column', plate_name = 'plate_location')
+    #Function to obtain the peaks in sample temperature profile
+    s_peaks, s_infl = edge_detection.peak_detection(temp)
+    # Function to obtain the peaks in plate location temperature profile
+    p_peaks, p_infl = edge_detection.peak_detection(plate_temp)
     # Function to obtain the inflection point(melting point) from the temperature profile.
-    inf_temp, s_peaks, p_peaks = inflection_point(temp,plate_temp)
+    inf_temp = inflection_point(temp, plate_temp, s_peaks, p_peaks)
     # Dataframe with sample location (row and column coordinates) and respective inflection point.
     m_df = pd.DataFrame({'Row':sample_location.Row,'Column':sample_location.Column,'Melting point':inf_temp})
     return m_df
