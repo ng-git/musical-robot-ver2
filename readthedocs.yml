@@ -29,9 +29,9 @@ python:
         path: another/package
    system_packages: true
 
-#master doc
-master_doc = 'index'
+# #master doc
+# master_doc = 'index'
 
-#submodules
-submodules:
-    includes:all
+# #submodules
+# submodules:
+#     includes:all
