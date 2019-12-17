@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to Musical Robot’s documentation! &mdash; Musical Robot June 2019 documentation</title>
+  <title>Musical Robot &mdash; Musical Robot June 2019 documentation</title>
   
 
   
@@ -80,7 +80,14 @@
             
               <!-- Local TOC -->
               <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Welcome to Musical Robot’s documentation!</a></li>
+<li><a class="reference internal" href="#">Musical Robot</a></li>
+<li><a class="reference internal" href="#modules">Modules</a><ul>
+<li><a class="reference internal" href="#module-musicalrobot.edge_detection">edge_detection</a></li>
+<li><a class="reference internal" href="#module-musicalrobot.pixel_analysis">pixel_analysis</a></li>
+<li><a class="reference internal" href="#module-musicalrobot.post_data">post_data</a></li>
+<li><a class="reference internal" href="#module-musicalrobot.irtemp">irtemp</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </div>
@@ -127,7 +134,7 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>Welcome to Musical Robot’s documentation!</li>
+      <li>Musical Robot</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -146,8 +153,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-musicalrobot.edge_detection">
-<span id="welcome-to-musical-robot-s-documentation"></span><h1>Welcome to Musical Robot’s documentation!<a class="headerlink" href="#module-musicalrobot.edge_detection" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="musical-robot">
+<h1>Musical Robot<a class="headerlink" href="#musical-robot" title="Permalink to this headline">¶</a></h1>
+<p>Start by reading the README.md file here: <a class="reference external" href="https://github.com/pozzocapstone/musical-robot/blob/master/README.md">https://github.com/pozzocapstone/musical-robot/blob/master/README.md</a>
+and then check out the usage in examples folder.</p>
+</div>
+<div class="section" id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-musicalrobot.edge_detection">
+<span id="edge-detection"></span><h2>edge_detection<a class="headerlink" href="#module-musicalrobot.edge_detection" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="musicalrobot.edge_detection.edge_detection">
 <code class="sig-prename descclassname">musicalrobot.edge_detection.</code><code class="sig-name descname">edge_detection</code><span class="sig-paren">(</span><em class="sig-param">flip_frames</em>, <em class="sig-param">n_samples</em><span class="sig-paren">)</span><a class="headerlink" href="#musicalrobot.edge_detection.edge_detection" title="Permalink to this definition">¶</a></dt>
@@ -356,7 +370,10 @@ left to right.</p>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-musicalrobot.pixel_analysis"></span><dl class="function">
+</div>
+<div class="section" id="module-musicalrobot.pixel_analysis">
+<span id="pixel-analysis"></span><h2>pixel_analysis<a class="headerlink" href="#module-musicalrobot.pixel_analysis" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
 <dt id="musicalrobot.pixel_analysis.image_eq">
 <code class="sig-prename descclassname">musicalrobot.pixel_analysis.</code><code class="sig-name descname">image_eq</code><span class="sig-paren">(</span><em class="sig-param">n_frames</em>, <em class="sig-param">frames</em><span class="sig-paren">)</span><a class="headerlink" href="#musicalrobot.pixel_analysis.image_eq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to obtained an equalized image using all the frames
@@ -496,7 +513,10 @@ and its respective inflection point obtained.</p>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-musicalrobot.post_data"></span><dl class="function">
+</div>
+<div class="section" id="module-musicalrobot.post_data">
+<span id="post-data"></span><h2>post_data<a class="headerlink" href="#module-musicalrobot.post_data" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
 <dt id="musicalrobot.post_data.export_csv">
 <code class="sig-prename descclassname">musicalrobot.post_data.</code><code class="sig-name descname">export_csv</code><span class="sig-paren">(</span><em class="sig-param">final_data</em><span class="sig-paren">)</span><a class="headerlink" href="#musicalrobot.post_data.export_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exports the dataframe of the run into a csv file to be saved or modifed as desired</p>
@@ -513,7 +533,10 @@ and its respective inflection point obtained.</p>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-musicalrobot.irtemp"></span><dl class="function">
+</div>
+<div class="section" id="module-musicalrobot.irtemp">
+<span id="irtemp"></span><h2>irtemp<a class="headerlink" href="#module-musicalrobot.irtemp" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
 <dt id="musicalrobot.irtemp.centikelvin_to_celsius">
 <code class="sig-prename descclassname">musicalrobot.irtemp.</code><code class="sig-name descname">centikelvin_to_celsius</code><span class="sig-paren">(</span><em class="sig-param">temp</em><span class="sig-paren">)</span><a class="headerlink" href="#musicalrobot.irtemp.centikelvin_to_celsius" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts given centikelvin value to Celsius</p>
@@ -566,6 +589,7 @@ and its respective inflection point obtained.</p>
 </dd></dl>
 
 <div class="toctree-wrapper compound">
+</div>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
