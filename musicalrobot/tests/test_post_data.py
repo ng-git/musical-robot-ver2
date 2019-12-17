@@ -31,10 +31,10 @@ import numpy as np
 #     assert isinstance(final_data,pd.Dataframe),'Output is not a dataframe'
 #     assert len(final_data)==len(all_samples),'Wrong number of samples in the output dataframe'
 
-def test_create_dataframe():
-    all_melt = [48,49,50]
-    all_possible = [48,49,50]
-    samples = 3
-    final_data = post_data.create_dataframe(all_melt, all_possible, samples)
-    assert isinstance(final_data,pd.DataFrame),'Output is not a dataframe'
-    assert len(final_data)== samples,'Wrong number of samples in the output dataframe'
+# def test_create_dataframe():
+#     all_melt = [48,49,50]
+#     all_possible = [48,49,50]
+#     samples = 3
+#     final_data = post_data.create_dataframe(all_melt, all_possible, samples)
+#     assert isinstance(final_data,pd.DataFrame),'Output is not a dataframe'
+#     assert len(final_data)== samples,'Wrong number of samples in the output dataframe'
