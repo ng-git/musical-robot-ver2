@@ -10,7 +10,18 @@ import numpy as np
 # Input: dataframe of final data
 # Output: no output - prompt to save the data to a csv
 def export_csv(final_data):
-    '''Exports the dataframe of the run into a csv file to be saved or modifed as desired'''
+    '''
+    Exports the dataframe of the run into a csv file to be saved or modifed as desired
+    
+    Parameters
+    -----------
+    final_data : Dataframe
+        A dataframe containing the final melting point data of all the samples.
+
+    Returns
+    --------
+    Prompt to save the data to a csv. 
+    '''
     global df
     df = final_data
 
@@ -112,16 +123,16 @@ def export_csv(final_data):
 # Step: collects all of the created lists, combines and labels the data
 # Input: all of the final data lists
 # Output: dataframe of final info (mol inputs, melting temps, sample index)
-def create_dataframe(all_melt, all_possible, samples):
-    '''Exports the dataframe of the run into a csv file to be saved or modifed as desired'''
-    all_samples = []
-    for i in range(samples):
-        all_samples.append(i)
+# def create_dataframe(all_melt, all_possible, samples):
+#     '''Exports the dataframe of the run into a csv file to be saved or modifed as desired'''
+#     all_samples = []
+#     for i in range(samples):
+#         all_samples.append(i)
 
-    final_data = pd.DataFrame()
+#     final_data = pd.DataFrame()
 
-    final_data['Sample Index'] = all_samples
-    final_data['Melting Temperature'] = all_melt
-    final_data['Other index possibilites'] = all_possible
+#     final_data['Sample Index'] = all_samples
+#     final_data['Melting Temperature'] = all_melt
+#     final_data['Other index possibilites'] = all_possible
 
-    return final_data
+#     return final_data
