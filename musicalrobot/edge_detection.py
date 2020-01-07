@@ -26,15 +26,20 @@ from irtemp import centikelvin_to_celsius
 ##########################################################################################################################################################################
 # Function to load the input file
 def input_file(file_name):
-    ''' To load the imput file as an array.
-    Args:
-        file_name (string) : Name of the file to be loaded as it is 
-        saved on the disk. Provide file path if it is not in
-        the same directory as the jupyter notebook.
-    Returns:
+    '''  
+    To load the imput file as an array.
+
+    Parameters
+    -----------
+    file_name : String
+        Name of the file to be loaded as it is saved on the disk. 
+        Provide file path if it is not in the same directory as the jupyter notebook.
+
+    Returns
+    --------
+    frames : Array
         In case of a video, returns an array for each frame
-        in the video.
-        In case of an image, return an array.    
+        in the video. In case of an image, return an array.  
     '''
     frames = io.imread(file_name)
     return frames
@@ -42,12 +47,19 @@ def input_file(file_name):
 # Function to flip the frames horizontally and vertically to correct for the mirroring 
 # during recording.
 def flip_frame(frames):
-    ''' To flip all the loaded frames horizontally and vertically
-        to correct for the mirroring during recording.
-        Args:
-        frames(Array): An array containing an array for each frame
+    ''' 
+    To flip all the loaded frames horizontally and vertically
+    to correct for the mirroring during recording.
+
+    Parameters
+    -----------
+    frames : Array 
+        An array containing an array for each frame
         in the video or just a single array in case of an image.
-        Returns:
+
+    Returns
+    --------
+    flip_frames : Array
         Flipped frames that can be processed to get temperature data.
     '''
     flip_frames = []
@@ -57,23 +69,32 @@ def flip_frame(frames):
     return flip_frames
 
 # Function to detect edges, fill and label the samples.
-def edge_detection(frames, n_samples):
-    ''' To detect the edges of the wells, fill and label them to
+def edge_detection(flip_frames, n_samples):
+    ''' 
+    To detect the edges of the wells, fill and label them to
     determine their centroids.
-    Args:
-    frames: The frames to be processed and determine the
-    sample temperature from.
-    Returns:
-    labeled_samples: All the samples in the frame are labeled
-    so that they can be used as props to get pixel data from.
+
+    Parameters
+    -----------
+    flip_frames : Array
+        The frames to be processed and determine the
+        sample temperature from.
+    n_samples : Int
+        The number of samples in the input video.
+
+    Returns
+    --------
+    labeled_samples : Array
+        All the samples in the frame are labeled
+        so that they can be used as props to get pixel data.
     '''
     for size in range(15,9,-1):
         for thres in range(1500,900,-100):
-            edges = feature.canny(frames[0]/thres)
+            edges = feature.canny(flip_frames[0]/thres)
             filled_samples = binary_fill_holes(edges)
-            cl_samples = remove_small_objects(filled_samples,min_size = size)
+            cl_samples = remove_small_objects(filled_samples, min_size = size)
             labeled_samples = label(cl_samples)
-            props = regionprops(labeled_samples, intensity_image=frames[0])
+            props = regionprops(labeled_samples, intensity_image = flip_frames[0])
             if len(props) == n_samples:
                 break
 #             if thres == 1000 and len(props) != n_samples:
@@ -86,16 +107,25 @@ def edge_detection(frames, n_samples):
 
 # Function to determine centroids of all the samples
 def regprop(labeled_samples, frames, n_rows, n_columns):
-    ''' Determines the area and centroid of all samples.
-        Args:
-        labeled_samples(array): An array with labeled samples.
-        flip_frames (array) : Original intensity image to determine
+    '''
+    Determines the area and centroid of all samples.
+
+    Parameters
+    -----------
+    labeled_samples: Array 
+        An array with labeled samples.
+    flip_frames : Array
+        Original intensity image to determine
         the intensity at sample centroids.
-        n_samples: Number of samples in the video being analyzed.
-        n_rows: Number of rows of sample
-        n_columns: Number of columns of sample
-        Returns:
-        A dictionary of dataframe with information about samples in every
+    n_rows: Int
+        Number of rows of sample
+    n_columns: Int
+        Number of columns of sample
+
+    Returns
+    --------
+    regprops: Dict
+        A dictionary of dataframes with information about samples in every
         frame of the video.
     '''
     regprops = {}
@@ -133,13 +163,25 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     return regprops
    
 def sort_regprops(regprops, n_columns, n_rows):
-    '''
+    ''' 
     Function to sort the regprops to match the order in which the samples
     are pipetted.
-    Args:
-    regprops(dict): A dictionary of dataframes containing information about the sample.
-    n_columns: Number of columns of samples
-    n_rows: Number of rows of samples
+    
+    Parameters
+    ------------
+    regprops : Dict
+        A dictionary of dataframes containing information about the sample.
+    n_columns : Int
+        Number of columns of samples
+    n_rows : Int
+        Number of rows of samples
+    
+    Returns
+    --------
+    sorted_regprops : Dict
+        A dictionary of dataframe with information about samples in every
+        frame of the video. The order of the samples is sorted from top to bottom and from
+        left to right.
     '''
     sorted_regprops = {}
     n_samples = n_columns * n_rows
@@ -161,15 +203,24 @@ def sort_regprops(regprops, n_columns, n_rows):
     return sorted_regprops
 
 # Function to obtain temperature of samples and plate temp
-def sample_temp(sorted_regprops,frames):
-    ''' Function to concatenate all the obtained temperature data
-        from the pixel values into lists.
-        Args:
-        sorted_regprops(dictionary): The dictionary of sorted dataframes containing temperature data.
-        frames(array): The array of frames to be processed to obtain temperature data.
-        Returns:
-        temp(list): Temperature of all the samples in every frame of the video.
-        plate_temp(list): Temperature of the plate next to every sample in every
+def sample_temp(sorted_regprops, frames):
+    ''' 
+    Function to concatenate all the obtained temperature data
+    from the pixel values into lists.
+    
+    Parameters
+    ----------
+    sorted_regprops : Dict
+        The dictionary of sorted dataframes containing temperature data.
+    frames : Array
+        The array of frames to be processed to obtain temperature data.
+    
+    Returns
+    -------
+    temp : List
+        Temperature of all the samples in every frame of the video.
+    plate_temp : List
+        Temperature of the plate next to every sample in every
         frame of the video.
     '''
     temp = []
@@ -186,14 +237,23 @@ def sample_temp(sorted_regprops,frames):
 
 # Function to obtain melting point by extracting the inflection point
 def peak_detection(temp_profiles):
-    '''Function to determine inflection point in the sample temperature
+    '''
+    Function to determine inflection point in the sample temperature
     profile(melting point)
-    Args:
-    temp(list): Temperature of all the samples or plate locations in every frame of the video.
-    Returns:
-    peaks(list): List of two highest peak(inflection points) indices in the
-    given temperature profiles.
-    infl(list):  List of temperature at inflection points for given temperature profiles.
+    
+    Parameters
+    -----------
+    temp : List
+        Temperature of all the samples or plate locations in every frame of the video.
+    
+    Returns
+    --------
+    peaks : List
+        List of two highest peak(inflection points) indices in the
+        given temperature profiles.
+    infl : List
+        List of temperature at inflection points for given temperature profiles.
+
     '''
     infl = []
     peak_indices = []
@@ -225,17 +285,27 @@ def peak_detection(temp_profiles):
     
 
 def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
-    '''
+    ''' 
     Function to get the inflection point(melting point) for each sample.
-    Args:
-    s_temp(list): Sample temperature profiles
-    p_temp(list): Plate location temperature profiles
-    s_peaks(list): List of two highest peak(inflection points) indices in the
-    temperature profile of the samples.
-    p_peaks(list): List of two highest peak(inflection points) indices in the
-    temperature profile of the plate.
-    Returns:
-    inf_temp(list): List of temperature at inflection points for each sample
+    
+    Parameters
+    -----------
+    s_temp : List
+        Sample temperature profiles
+    p_temp : List
+        Plate location temperature profiles
+    s_peaks : List
+        List of two highest peak(inflection points) indices in the
+        temperature profile of the samples.
+    p_peaks : List
+        List of two highest peak(inflection points) indices in the
+        temperature profile of the plate.
+    
+    Returns
+    --------
+    inf_temp : List
+        List of temperature at inflection points for each sample
+
     '''
     inf_peak = [] ; inf_temp = []
     for i,peaks in enumerate(s_peaks):
@@ -255,25 +325,39 @@ def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
 #### Wrapping functions ######
 # Wrapping function to get the inflection point
 def inflection_temp(frames ,n_rows, n_columns):
-    ''' Function to obtain sample temperature and plate temperature
-        in every frame of the video using edge detection.
-    Args:
-        frames(List): An list containing an array for each frame
+    ''' 
+    Function to obtain sample temperature and plate temperature 
+    in every frame of the video using edge detection.
+    
+    Parameters
+    -----------
+    frames : List
+        An list containing an array for each frame
         in the video or just a single array in case of an image.
-        n_samples: Number of samples in the video
-        n_rows: Number of rows of sample
-        n_columns: Number of columns of sample
-        Returns:
-        flip_frames(array) : An array of images which are flipped to correct the
+    n_rows: List
+        Number of rows of sample
+    n_columns: List
+        Number of columns of sample
+    
+    Returns
+    --------
+    flip_frames : Array
+        An array of images which are flipped to correct the
         rotation caused by the IR camera
-        regprops(dictionary) : A dictionary of dataframes containing temperature data.
-        s_temp(List): A list containing a list a temperatures for each sample
+    regprops : Dict
+        A dictionary of dataframes containing temperature data.
+    s_temp : List
+        A list containing a list a temperatures for each sample
         in every frame of the video 
-        plate_temp(List): A list containing a list a temperatures for each plate
+    plate_temp : List
+        A list containing a list a temperatures for each plate
         location in every frame of the video.
-        inf_temp: A list containing melting point of all the samples obtained by the plot.
-        m_df(Dataframe): A dataframe containing row and column coordinates of each sample 
+    inf_temp : List
+        A list containing melting point of all the samples obtained by the plot.
+    m_df : Dataframe
+        A dataframe containing row and column coordinates of each sample 
         and its respective inflection point obtained.
+
     '''
 
     # Determining the number of samples

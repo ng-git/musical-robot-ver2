@@ -29,13 +29,21 @@ from edge_detection import inflection_point
 
 # Image equalization
 def image_eq(n_frames,frames):
-    '''Function to obtained an equalized image using all the frames
-       in the video.
-       Args:
-       n_frames(int): The number of frames in the video.
-       frames(List): List of arrays of frames in the video.
-       Returns:
-       img_eq: Equalized image  
+    '''
+    Function to obtained an equalized image using all the frames
+    in the video.
+    
+    Parameters
+    -----------
+    n_frames : Int
+        The number of frames in the video.
+    frames : List
+        List of arrays of frames in the video.
+    
+    Returns
+    --------
+    img_eq: Array
+        Equalized image  
     '''
     for II in range(n_frames):
         frame = frames[II]
@@ -50,14 +58,22 @@ def image_eq(n_frames,frames):
 
 # Function to obtain sum of pixels over all the rows and columns
 def pixel_sum(img_eq):
-    ''' Funtion to determine sum of pixels over all the rows and columns
-        to obtain plots with peaks at the sample position in the array.
-        Args:
-        img_eq(array):Equalized image 
-        Returns:
-        column_sum: Sum of pixels over all the columns
-        row_sum: Sum of pixels over all the rows
-        Also returns plots of column sum and row sum.
+    ''' 
+    Funtion to determine sum of pixels over all the rows and columns
+    to obtain plots with peaks at the sample position in the array.
+    
+    Parameters
+    -----------
+        img_eq : Array
+            Equalized image 
+    
+    Returns
+    --------
+        column_sum: List
+            Sum of pixels over all the columns
+        row_sum: List
+            Sum of pixels over all the rows
+            Also returns plots of column sum and row sum.
     '''
     
     # Denoising the image
@@ -93,20 +109,30 @@ def pixel_sum(img_eq):
 # To determine the peak values in the row and column sum and thus sample
 # location.
 def peak_values(column_sum,row_sum,n_columns,n_rows,image):
-    ''' Function to find peaks from the column_sum and row_sum arrays
-        and return a dataframe with sample locations.
-        Args:
-        column_sum: Sum of pixel values over all the columns in the
-        image array.
-        row_sum: Sum of pixel values over all the rows in the
-        image array.
-        n_columns: Number of columns of samples in the image
-        n_rows: Number of rows of samples in the image.
-        image: Image to be processed
-        Returns: 
-        sample_location: A dataframe containing sample and plate locations and a plot with locations
-        superimposed on the image to be processed.
+    '''
+    Function to find peaks from the column_sum and row_sum arrays
+    and return a dataframe with sample locations.
+    
+    Parameters
+    -----------
+        column_sum: List
+            Sum of pixel values over all the columns in the
+            image array.
+        row_sum: List
+            Sum of pixel values over all the rows in the
+            image array.
+        n_columns: Int
+            Number of columns of samples in the image
+        n_rows: Int
+            Number of rows of samples in the image.
+        image: Array
+            Image to be processed
         
+    Returns
+    -------- 
+        sample_location: Dataframe
+            A dataframe containing sample and plate locations and a plot with locations
+            superimposed on the image to be processed.
     '''
     # Finding peaks in the column sum array
     all_column_peaks = find_peaks(column_sum, height = (None, 0), distance=7)
@@ -144,13 +170,21 @@ def peak_values(column_sum,row_sum,n_columns,n_rows,image):
     
     
 def locations(row_peak_indices, column_peak_indices, image):
-    '''Function to get location of all the samples(row and column) and their
+    '''
+    Function to get location of all the samples(row and column) and their
     respective plate locations. (Same column but different rows)
-    Args:
-    row_peak_indices(list): List containing the location of all the sample rows
-    column_peak_indices(list): List containing the location of all the sample columns.
-    Returns:
-    sample_location (Dataframe): Dataframe containing sample location and plate location.
+    
+    Parameters
+    -----------
+    row_peak_indices : List
+        List containing the location of all the sample rows
+    column_peak_indices : List
+        List containing the location of all the sample columns.
+    
+    Returns
+    --------
+    sample_location : Dataframe
+        Dataframe containing sample location and plate location.
     '''
     # Appending row and column peak values to arrays to get plate location.
     row = []
@@ -178,15 +212,31 @@ def locations(row_peak_indices, column_peak_indices, image):
 
 # To determine the sample and plate temperature using peak locations.
 def pixel_intensity(sample_location, frames, x_name, y_name, plate_name):
-    ''' Function to find pixel intensity at all sample locations
-        and plate locations in each frame.
-        Args:
-        sample_location(dataframe): A dataframe containing sample and plate locations.
-        frames(list or array): An array of arrays containing all the frames of a video.
-        x_name(string): Name of the column in sample_location containing the row values of the samples.
-        y_name(string): Name of the column in sample_location containing the column values of the samples.
-        plate_name(string): Name of the column in sample_location containing the column values of the
+    ''' 
+    Function to find pixel intensity at all sample locations
+    and plate locations in each frame.
+
+    Parameters
+    -----------
+    sample_location : Dataframe
+        A dataframe containing sample and plate locations.
+    frames : Array
+        An array of arrays containing all the frames of a video.
+    x_name : String
+        Name of the column in sample_location containing the row values of the samples.
+    y_name : String
+        Name of the column in sample_location containing the column values of the samples.
+    plate_name : String
+        Name of the column in sample_location containing the column values of the
         plate location.
+
+    Returns
+    --------
+    temp : List
+        Temperature of all the samples in every frame of the video.
+    plate_temp : List
+        Temperature of the plate next to every sample in every
+        frame of the video.
     '''
     temp = []
     plate_temp = []
@@ -209,16 +259,26 @@ def pixel_intensity(sample_location, frames, x_name, y_name, plate_name):
 
 ##### Wrapping Function ######
 def pixel_temp(frames,n_frames,n_columns,n_rows):
-    ''' Function to determine the temperature of the samples and plate locations by analysing 
+    ''' 
+    Function to determine the temperature of the samples and plate locations by analysing 
     pixel values and finding peaks.
-    Args:
-    frames: The frames of a video to be analysed.
-    n_frames: Number of frames in the video
-    n_columns: Number of columns of samples in the image
-    n_rows: Number of rows of samples in the image.
-    Returns:
-    m_df(Dataframe): A dataframe containing row and column coordinates of each sample 
-    and its respective inflection point obtained. 
+    
+    Parameters
+    -----------
+    frames: Array
+        The frames of a video to be analysed.
+    n_frames: Int
+        Number of frames in the video
+    n_columns: Int
+        Number of columns of samples in the image
+    n_rows: Int
+        Number of rows of samples in the image.
+    
+    Returns
+    --------
+    m_df : Dataframe
+        A dataframe containing row and column coordinates of each sample 
+        and its respective inflection point obtained. 
     '''
     flip_frames = edge_detection.flip_frame(frames)
     #Function to obtained an equalized image using all the frames

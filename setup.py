@@ -17,7 +17,7 @@ setup(name = 'musicalrobot',
     description_content_type = 'text/markdown; charset=UTF-8; variant=GFM',
     short_description = 'Melting temperature determination using IR bolometry',
     short_description_content_type = 'text/markdown',
-    long_description = open('README.MD','r').read(),
+    long_description = open('README.md','r').read(),
     long_description_content_type = 'text/markdown; charset=UTF-8; variant=GFM',
     zip_safe = False,
 )
