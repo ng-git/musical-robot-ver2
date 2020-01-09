@@ -174,10 +174,10 @@ def test_inflection_temp():
         crop_frame.append(frame[35:85,40:120])
     n_samples = 9; n_rows = 3; n_columns = 3
     sorted_regprops, s_temp, p_temp, inf_temp, m_df = edge_detection.inflection_temp(crop_frame, n_rows, n_columns)
-    assert isinstance(flip_frames,list),'Output is not a list'
+    assert isinstance(crop_frame,list),'Output is not a list'
     assert isinstance(inf_temp, list),'Output is not a list'
     assert len(inf_temp) == n_samples,'Wrong number of samples detected'
-    for i in range(len(flip_frames)):
+    for i in range(len(crop_frame)):
         assert len(sorted_regprops[i])==n_samples,'Wrong number of samples detected'
     assert isinstance(s_temp,list),'Sample temperature output is not a list'
     assert isinstance(p_temp,list),'Plate temperature output is not a list'
