@@ -76,7 +76,7 @@ def edge_detection(frames, n_samples):
 
     Parameters
     -----------
-    flip_frames : Array
+    frames : Array
         The frames to be processed and determine the
         sample temperature from.
     n_samples : Int
@@ -90,11 +90,11 @@ def edge_detection(frames, n_samples):
     '''
     for size in range(15,9,-1):
         for thres in range(1500,900,-100):
-            edges = feature.canny(flip_frames[0]/thres)
+            edges = feature.canny(frames[0]/thres)
             filled_samples = binary_fill_holes(edges)
             cl_samples = remove_small_objects(filled_samples, min_size = size)
             labeled_samples = label(cl_samples)
-            props = regionprops(labeled_samples, intensity_image = flip_frames[0])
+            props = regionprops(labeled_samples, intensity_image = frames[0])
             if len(props) == n_samples:
                 break
 #             if thres == 1000 and len(props) != n_samples:
@@ -114,7 +114,8 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     -----------
     labeled_samples: Array 
         An array with labeled samples.
-    flip_frames : Array
+    
+    frames : Array
         Original intensity image to determine
         the intensity at sample centroids.
     n_rows: Int
@@ -341,7 +342,7 @@ def inflection_temp(frames ,n_rows, n_columns):
     
     Returns
     --------
-    flip_frames : Array
+    frames : Array
         An array of images which are flipped to correct the
         rotation caused by the IR camera
     regprops : Dict
