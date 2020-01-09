@@ -69,7 +69,7 @@ def flip_frame(frames):
     return flip_frames
 
 # Function to detect edges, fill and label the samples.
-def edge_detection(flip_frames, n_samples):
+def edge_detection(frames, n_samples):
     ''' 
     To detect the edges of the wells, fill and label them to
     determine their centroids.
@@ -364,17 +364,17 @@ def inflection_temp(frames ,n_rows, n_columns):
     n_samples = n_columns * n_rows
     # Use the function 'flip_frame' to flip the frames horizontally 
     #and vertically to correct for the mirroring during recording
-    flip_frames = flip_frame(frames)
+    # flip_frames = flip_frame(frames)
     # Use the function 'edge_detection' to detect edges, fill and 
     # label the samples.
-    labeled_samples = edge_detection(flip_frames, n_samples)
+    labeled_samples = edge_detection(frames, n_samples)
     # Use the function 'regprop' to determine centroids of all the samples
-    regprops = regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    regprops = regprop(labeled_samples, frames, n_rows, n_columns)
     # Use the function 'sort_regprops' to sort the dataframes in regprops
     sorted_regprops = sort_regprops(regprops, n_columns, n_rows)
     # Use the function 'sample_temp' to obtain temperature of samples 
     # and plate temp
-    s_temp, p_temp = sample_temp(sorted_regprops,flip_frames)
+    s_temp, p_temp = sample_temp(sorted_regprops,frames)
     # Use the function 'sample_peaks' to determine the inflections points
     # and temperatures in sample temperature profiles
     s_peaks, s_infl = peak_detection(s_temp)
@@ -386,4 +386,4 @@ def inflection_temp(frames ,n_rows, n_columns):
     # Creating a dataframe with row and column coordinates of sample centroid and its
     # melting temperature (Inflection point).
     m_df = pd.DataFrame({'Row':regprops[0].Row,'Column':regprops[0].Column,'Melting point':inf_temp})
-    return flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df
+    return sorted_regprops, s_temp, p_temp, inf_temp, m_df

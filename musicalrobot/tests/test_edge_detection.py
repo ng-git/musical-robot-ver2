@@ -61,11 +61,11 @@ def test_edge_detection():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
     assert isinstance(labeled_samples, np.ndarray),'Output is not an array'
-    assert flip_frames[0].shape == labeled_samples.shape,'Input and Output array shapes are different.'
+    assert crop_frame[0].shape == labeled_samples.shape,'Input and Output array shapes are different.'
     return
 
 def test_regprop():
@@ -76,13 +76,13 @@ def test_regprop():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9; n_rows = 3; n_columns = 3
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     assert isinstance(regprops,dict),'Output is not a dictionary'
-    assert len(regprops)==len(flip_frames),'The number of dataframes in the dictionary is not equal to number of frames input.'
-    for i in range(len(flip_frames)):
+    assert len(regprops)==len(crop_frame),'The number of dataframes in the dictionary is not equal to number of frames input.'
+    for i in range(len(crop_frame)):
         assert len(regprops[i])==n_samples,'Wrong number of samples detected'
     return
 
@@ -93,14 +93,14 @@ def test_sort_regprops():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9; n_rows = 3; n_columns = 3
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
     assert isinstance(sorted_regprops,dict),'Output is not a dictionary'
-    assert len(sorted_regprops)==len(flip_frames),'The number of dataframes in the dictionary is not equal to number of frames input.'
-    for i in range(len(flip_frames)):
+    assert len(sorted_regprops)==len(crop_frame),'The number of dataframes in the dictionary is not equal to number of frames input.'
+    for i in range(len(crop_frame)):
         assert len(sorted_regprops[i])==n_samples,'Wrong number of samples detected'
     return
 
@@ -112,12 +112,12 @@ def test_sample_temp():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9; n_rows = 3; n_columns = 3
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
-    temp, plate_temp = edge_detection.sample_temp(sorted_regprops,flip_frames)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops,crop_frame)
     assert isinstance(temp,list),'Sample temperature output is not a list'
     assert isinstance(plate_temp,list),'Plate temperature output is not a list'
     assert len(temp) == n_samples,'Temperature obtained for wrong number of samples'
@@ -131,12 +131,12 @@ def test_sample_peaks():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9; n_rows = 3; n_columns = 3
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
-    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, flip_frames)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, crop_frame)
     s_peaks, s_infl = edge_detection.peak_detection(temp)
     assert isinstance(s_peaks, list), 'Output is not a list'
     assert isinstance(s_infl, list), 'Output is not a list'
@@ -152,12 +152,12 @@ def test_inflection_point():
     crop_frame = []
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
-    flip_frames = edge_detection.flip_frame(crop_frame)
+    # flip_frames = edge_detection.flip_frame(crop_frame)
     n_samples = 9; n_rows = 3; n_columns = 3
-    labeled_samples = edge_detection.edge_detection(flip_frames, n_samples)
-    regprops = edge_detection.regprop(labeled_samples, flip_frames, n_rows, n_columns)
+    labeled_samples = edge_detection.edge_detection(crop_frame, n_samples)
+    regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
-    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, flip_frames)
+    temp, plate_temp = edge_detection.sample_temp(sorted_regprops, crop_frame)
     s_peaks, s_infl = edge_detection.peak_detection(temp)
     p_peaks, p_infl = edge_detection.peak_detection(plate_temp)
     inf_temp = edge_detection.inflection_point(temp, plate_temp, s_peaks, p_peaks)
@@ -173,7 +173,7 @@ def test_inflection_temp():
     for frame in frames:
         crop_frame.append(frame[35:85,40:120])
     n_samples = 9; n_rows = 3; n_columns = 3
-    flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = edge_detection.inflection_temp(crop_frame, n_rows, n_columns)
+    sorted_regprops, s_temp, p_temp, inf_temp, m_df = edge_detection.inflection_temp(crop_frame, n_rows, n_columns)
     assert isinstance(flip_frames,list),'Output is not a list'
     assert isinstance(inf_temp, list),'Output is not a list'
     assert len(inf_temp) == n_samples,'Wrong number of samples detected'
