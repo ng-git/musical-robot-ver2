@@ -1,3 +1,11 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import musicalrobot
+
+from musicalrobot import edge_detection as ed
+from musicalrobot import pixel_analysis as p
+
 def image_crop (tocrop, top, bottom, left, right):
     """
     Function is used within the auto_crop function to  crop using the inputs
