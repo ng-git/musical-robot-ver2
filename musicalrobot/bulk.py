@@ -175,7 +175,7 @@ def inflection_points (crop):
 
     return inf_temp
 
-def bulk_crop ():
+def bulk_crop (cv_file_names):
     """
     Wrapper for all of the bulk cropping functions. Wraps through all of the
         files in the inputed folder, asks for input if the user would like to
@@ -216,7 +216,7 @@ def bulk_crop ():
 
     return d_crop, d_names
 
-def bulk_analyze ():
+def bulk_analyze (cv_file_names, d_crop, d_names):
     """
     Wrapper for all of the bulk analysis functions. Wraps through all of the
         files in the inputed folder. Runs analysis functions and then continues to loop
@@ -260,7 +260,7 @@ def bulk_analyze ():
 
     return d_inftemp, all_inf
 
-def bulk_process ():
+def bulk_process (cv_file_names):
     """
     Wrapper for all of the bulk functions. Runs the bulk cropper followed by the
         bulk analyzer.
