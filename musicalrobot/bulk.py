@@ -210,17 +210,18 @@ def bulk_crop (cv_file_names):
     """
 
     #file input
-    d_files['%s' % i] = ed.input_file('../../MR_Validation/CameraHeight/'+str(cv_file_names))
-    tocrop = d_files['%s' %i]
+    for i,file in enumerate(cv_file_names):
+        d_files['%s' % i] = ed.input_file('../../MR_Validation/CameraHeight/'+str(file))
+        tocrop = d_files['%s' %i]
 
-    # create names
-    hold_name = cv_file_names[i]
-    d_names['%s' % i] = hold_name[:-5]
-    plotname = d_names[str(i)]
-    keyname = str(i)
+        # create names
+        hold_name = cv_file_names[i]
+        d_names['%s' % i] = hold_name[:-5]
+        plotname = d_names[str(i)]
+        keyname = str(i)
 
-    #auto crop
-    d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
+        #auto crop
+        d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
 
     return d_crop, d_names
 
