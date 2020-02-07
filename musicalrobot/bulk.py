@@ -210,7 +210,7 @@ def bulk_crop (cv_file_names):
     """
 
     #file input
-    d_files['%s' % i] = ed.input_file('../../MR_Validation/CameraHeight/'+str(file))
+    d_files['%s' % i] = ed.input_file('../../MR_Validation/CameraHeight/'+str(cv_file_names))
     tocrop = d_files['%s' %i]
 
     # create names
