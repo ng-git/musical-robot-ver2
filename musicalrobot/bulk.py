@@ -6,6 +6,67 @@ import musicalrobot
 from musicalrobot import edge_detection as ed
 from musicalrobot import pixel_analysis as pa
 
+def dict_pack (d_files, d_names, d_crop, d_inftemp):
+    """
+    Function is used within the auto_crop function to  crop using the inputs
+    given by the user.
+
+    Parameters:
+    -----------
+    d_files : dictonary
+        contains the raw file in the requested folder
+
+    d_names : dictonary
+        Contains all the names of the files in the requested folder
+
+    d_crop : dictonary
+        Contains the cropped versions of the files in the folder
+
+    d_inftemp : dictonary
+        Contins all of the inflection points of the files in the folder
+
+    Returns
+    --------
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary
+
+    """
+    d_all = {'d_files' : d_files, 'd_names' : d_names, 'd_crop' : d_crop, 'd_inftemp': d_inftemp}
+
+    return d_all
+
+def dict_unpack (d_all):
+    """
+    Function is used within the auto_crop function to  crop using the inputs
+    given by the user.
+
+    Parameters:
+    -----------
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary
+
+    Returns
+    --------
+    d_files : dictonary
+        contains the raw file in the requested folder
+
+    d_names : dictonary
+        Contains all the names of the files in the requested folder
+
+    d_crop : dictonary
+        Contains the cropped versions of the files in the folder
+
+    d_inftemp : dictonary
+        Contins all of the inflection points of the files in the folder
+
+    """
+    d_files = d_all['d_files']
+    d_names = d_all['d_names']
+    d_crop = d_all['d_crop']
+    d_inftemp = d_all['d_inftemp']
+
+    return d_files, d_names, d_crop, d_inftemp
+
 def image_crop (tocrop, top, bottom, left, right):
     """
     Function is used within the auto_crop function to  crop using the inputs
@@ -200,7 +261,7 @@ def inflection_points (crop):
 
     return inf_temp
 
-def bulk_crop (cv_file_names, location):
+def bulk_crop (cv_file_names, location, d_all):
     """
     Wrapper for all of the bulk cropping functions. Wraps through all of the
         files in the inputed folder, asks for input if the user would like to
@@ -211,25 +272,23 @@ def bulk_crop (cv_file_names, location):
     Parameters:
     -----------
     cv_file_names : list
-        list of all of the file names in a specified folder, needs
-        to be created before running the bulk wrapper
+        list of all of the file names in a specified folder, needs to be created
+        before running the bulk wrapper
 
     location : string
         string containing the file location of the desired folder from the current
         location of the workbook
 
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary
+
     Returns:
     --------
-    d_crop : dictionary
-        A dictionary of all of the information from the raw tiff files for all of
-        the files in the specifed folder
-
-    d_names : dictionary
-        A dictionary of all of the file names from all of the files in the specified
-        folder. Will correlate with the keys in the d_crop dictionary
-
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary, Should contain all the
+        new additions from the functions
     """
-
+    d_files, d_names, d_crop, d_inftemp = dict_unpack(d_all)
 
     for i,file in enumerate(cv_file_names):
         #file input
@@ -245,13 +304,15 @@ def bulk_crop (cv_file_names, location):
         #auto crop
         d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
 
-    return d_crop, d_names
+    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp)
 
-def bulk_analyze (cv_file_names, d_crop, d_names):
+    return d_all
+
+def bulk_analyze (cv_file_names, d_all):
     """
     Wrapper for all of the bulk analysis functions. Wraps through all of the
-        files in the inputed folder. Runs analysis functions and then continues to loop
-        through all of the files
+        files in the inputed folder. Runs analysis functions and then continues
+        to loop through all of the files
 
     Parameters:
     -----------
@@ -259,25 +320,21 @@ def bulk_analyze (cv_file_names, d_crop, d_names):
         list of all of the file names in a specified folder, needs
         to be created before running the bulk wrapper
 
-    d_crop : dictionary
-        A dictionary of all of the information from the raw tiff files for all of
-        the files in the specifed folder
-
-    d_names : dictionary
-        A dictionary of all of the file names from all of the files in the specified
-        folder. Will correlate with the keys in the d_crop dictionary
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary
 
     Returns:
     --------
-    d_inftemp : dictionary
-        A dictionary of all the inflection temperatures for each file in the
-        specifed folder
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary, Should contain all the
+        new additions from the functions
 
     all_inf : dataframe
         a dataframe with all of the sample wells and all of the frames. The
         columns will have the file name and the rows will have the well index
 
     """
+    d_files, d_names, d_crop, d_inftemp = dict_unpack(d_all)
 
     for i, file in enumerate (cv_file_names):
         plotname = d_names[str(i)]
@@ -289,9 +346,11 @@ def bulk_analyze (cv_file_names, d_crop, d_names):
         #create df output
         all_inf[plotname] = inf_temp
 
-    return d_inftemp, all_inf
+    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp)
 
-def bulk_process (cv_file_names, location):
+    return d_all, all_inf
+
+def bulk_process (cv_file_names, location, d_all):
     """
     Wrapper for all of the bulk functions. Runs the bulk cropper followed by the
         bulk analyzer.
@@ -306,23 +365,23 @@ def bulk_process (cv_file_names, location):
         string containing the file location of the desired folder from the current
         location of the workbook
 
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary, should either be
+        empty or from a previous run when an update is needed
+
     Returns:
     --------
-    d_crop : dictionary
-        A dictionary of all of the information from the raw tiff files for all of
-        the files in the specifed folder
-
-    d_inftemp : dictionary
-        A dictionary of all the inflection temperatures for each file in the
-        specifed folder
+    d_all : dictonary
+        Nested dictionary of all of the needed dictonary, Should contain all the
+        new additions from the functions
 
     all_inf : dataframe
         a dataframe with all of the sample wells and all of the frames. The
         columns will have the file name and the rows will have the well index
 
     """
-    d_crop, d_names = bulk_crop(cv_file_names, location)
+    d_crop, d_names, d_all = bulk_crop(cv_file_names, location, d_all)
 
-    d_inftemp, all_inf = bulk_analyze(cv_file_names, d_crop, d_names)
+    d_inftemp, all_inf d_all = bulk_analyze(cv_file_names, d_all)
 
-    return d_crop, d_inftemp, all_inf
+    return d_all, all_inf
