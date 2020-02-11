@@ -200,7 +200,7 @@ def inflection_points (crop):
 
     return inf_temp
 
-def bulk_crop (cv_file_names):
+def bulk_crop (cv_file_names, location):
     """
     Wrapper for all of the bulk cropping functions. Wraps through all of the
         files in the inputed folder, asks for input if the user would like to
@@ -213,6 +213,10 @@ def bulk_crop (cv_file_names):
     cv_file_names : list
         list of all of the file names in a specified folder, needs
         to be created before running the bulk wrapper
+
+    location : string
+        string containing the file location of the desired folder from the current
+        location of the workbook
 
     Returns:
     --------
@@ -297,6 +301,10 @@ def bulk_process (cv_file_names, location):
     cv_file_names : list
         list of all of the file names in a specified folder, needs
         to be created before running the bulk wrapper
+
+    location : string
+        string containing the file location of the desired folder from the current
+        location of the workbook
 
     Returns:
     --------
