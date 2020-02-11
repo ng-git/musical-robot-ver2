@@ -382,6 +382,6 @@ def bulk_process (cv_file_names, location, d_all):
     """
     d_crop, d_names, d_all = bulk_crop(cv_file_names, location, d_all)
 
-    d_inftemp, all_inf d_all = bulk_analyze(cv_file_names, d_all)
+    d_inftemp, all_inf, d_all = bulk_analyze(cv_file_names, d_all)
 
     return d_all, all_inf
