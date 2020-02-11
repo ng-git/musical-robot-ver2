@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import musicalrobot
 
 from musicalrobot import edge_detection as ed
-from musicalrobot import pixel_analysis as p
+from musicalrobot import pixel_analysis as pa
 
 def image_crop (tocrop, top, bottom, left, right):
     """
@@ -91,6 +91,23 @@ def choose_crop (tocrop, plotname):
         out of the function for use in next functions.
 
     """
+    crop = []
+    out = 0
+    plot_image(tocrop, plotname)
+
+    while out == 0:
+        crop = tocrop
+        decide = input("Do you want to run the crop for this video? Options are y/n: ")
+        if decide == 'y':
+            crop = auto_crop(tocrop, plotname)
+            out = 1
+            break
+        elif decide == 'n':
+            out = 1
+        else:
+            print("please type either y or n")
+            out = 0
+
     return crop, crop
 
 def auto_crop (tocrop, plotname):
@@ -124,7 +141,7 @@ def auto_crop (tocrop, plotname):
 
     #User inputs - plot will show between each iteration and will show updates with inputs
     while TotalChange != 0:
-        crop = image_cropping(tocrop, top, bottom, left, right)
+        crop = image_crop(tocrop, top, bottom, left, right)
         plot_image(crop, plotname)
 
         TotalChange = 0
@@ -209,9 +226,10 @@ def bulk_crop (cv_file_names):
 
     """
 
-    #file input
-    for i,file in enumerate(cv_file_names):
-        d_files['%s' % i] = ed.input_file('../../MR_Validation/CameraHeight/'+str(file))
+
+    for i,file in enumerate(cv_file_names, location):
+        #file input
+        d_files['%s' % i] = ed.input_file(location +str(file))
         tocrop = d_files['%s' %i]
 
         # create names
@@ -269,7 +287,7 @@ def bulk_analyze (cv_file_names, d_crop, d_names):
 
     return d_inftemp, all_inf
 
-def bulk_process (cv_file_names):
+def bulk_process (cv_file_names, location):
     """
     Wrapper for all of the bulk functions. Runs the bulk cropper followed by the
         bulk analyzer.
@@ -295,7 +313,7 @@ def bulk_process (cv_file_names):
         columns will have the file name and the rows will have the well index
 
     """
-    d_crop, d_names = bulk_crop(cv_file_names)
+    d_crop, d_names = bulk_crop(cv_file_names, location)
 
     d_inftemp, all_inf = bulk_analyze(cv_file_names, d_crop, d_names)
 
