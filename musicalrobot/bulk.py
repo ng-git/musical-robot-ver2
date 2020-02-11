@@ -231,7 +231,7 @@ def bulk_crop (cv_file_names, location):
     """
 
 
-    for i,file in enumerate(cv_file_names, location):
+    for i,file in enumerate(cv_file_names):
         #file input
         d_files['%s' % i] = ed.input_file(location +str(file))
         tocrop = d_files['%s' %i]
