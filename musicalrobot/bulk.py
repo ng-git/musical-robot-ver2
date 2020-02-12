@@ -97,6 +97,13 @@ def image_crop (tocrop, top, bottom, left, right):
 
     """
     crop = []
+
+    #checking tocrop is an array and converting if its not
+    if isinstance(tocrop, np.ndarray) == True:
+        pass
+    else:
+        tocrop = np.asarray(tocrop)
+
     frames, height, width = tocrop.shape
     for frame in tocrop:
         crop.append(frame[0 + top: height - bottom, 0 + left: width - right])
@@ -160,6 +167,7 @@ def choose_crop (tocrop, plotname):
         crop = tocrop
         decide = input("Do you want to run the crop for this video? Options are y/n: ")
         if decide == 'y':
+            tocrop = d_files
             crop = auto_crop(tocrop, plotname)
             out = 1
             break
