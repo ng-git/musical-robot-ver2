@@ -293,13 +293,17 @@ def bulk_crop (cv_file_names, location, d_all):
     for i,file in enumerate(cv_file_names):
         #file input
         d_files['%s' % i] = ed.input_file(location +str(file))
-        tocrop = d_files['%s' %i]
 
         # create names
         hold_name = cv_file_names[i]
         d_names['%s' % i] = hold_name[:-5]
         plotname = d_names[str(i)]
         keyname = str(i)
+
+        if d_crop['%s' % i] != 0:
+            tocrop = d_crop['%s' %i]
+        else:
+            tocrop = d_files['%s' %i]
 
         #auto crop
         d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
