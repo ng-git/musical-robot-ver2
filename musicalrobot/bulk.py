@@ -167,7 +167,6 @@ def choose_crop (tocrop, plotname):
         crop = tocrop
         decide = input("Do you want to run the crop for this video? Options are y/n: ")
         if decide == 'y':
-            tocrop = d_files
             crop = auto_crop(tocrop, plotname)
             out = 1
             break
