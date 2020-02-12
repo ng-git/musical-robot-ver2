@@ -301,11 +301,14 @@ def bulk_crop (cv_file_names, location, d_all):
         keyname = str(i)
 
         if len(d_crop) == 0:
-            tocrop = d_files['%s' %i]
+            tocrop = d_files['%s' % i]
         else:
-            tocrop = d_crop['%s' %i]
+            if keyname in d_crop:
+                tocrop = d_crop['%s' % i]
+            else:
+                tocrop = d_files['%s' % i]
 
-        #auto crop
+        #auto crops
         d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
 
     d_all = dict_pack(d_files, d_names, d_crop, d_inftemp)
