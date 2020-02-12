@@ -266,7 +266,7 @@ def inflection_points (crop):
     p_peaks, p_infl = ed.peak_detection(plate_temp)
     inf_temp = ed.inflection_point(temp, plate_temp, s_peaks, p_peaks)
 
-    return inf_temp
+    return inf_temp, inf_temp
 
 def bulk_crop (cv_file_names, location, d_all):
     """
