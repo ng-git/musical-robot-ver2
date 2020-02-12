@@ -350,6 +350,8 @@ def bulk_analyze (cv_file_names, d_all):
     """
     d_files, d_names, d_crop, d_inftemp = dict_unpack(d_all)
 
+    all_inf = pd.DataFrame()
+
     for i, file in enumerate (cv_file_names):
         plotname = d_names[str(i)]
         keyname = str(i)
