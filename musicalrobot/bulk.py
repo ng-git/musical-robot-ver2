@@ -300,10 +300,10 @@ def bulk_crop (cv_file_names, location, d_all):
         plotname = d_names[str(i)]
         keyname = str(i)
 
-        if d_crop['%s' % i] != 0:
-            tocrop = d_crop['%s' %i]
-        else:
+        if len(d_crop) == 0:
             tocrop = d_files['%s' %i]
+        else:
+            tocrop = d_crop['%s' %i]
 
         #auto crop
         d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
