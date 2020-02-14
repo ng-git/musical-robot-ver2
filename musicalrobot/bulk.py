@@ -258,7 +258,7 @@ def auto_crop (tocrop, plotname):
     return crop
 
 
-def inflection_points (crop, plotname):
+def inflection_points (crop, plotname, save_location):
     """
     This is a rewrap of the inflection point analysis function using the additive
         rows and columns to find the centriods. All function are the same, but
@@ -350,7 +350,7 @@ def bulk_crop (cv_file_names, location, d_all):
 
     return d_all
 
-def bulk_analyze (cv_file_names, d_all):
+def bulk_analyze (cv_file_names, d_all, save_location):
     """
     Wrapper for all of the bulk analysis functions. Wraps through all of the
         files in the inputed folder. Runs analysis functions and then continues
@@ -386,7 +386,7 @@ def bulk_analyze (cv_file_names, d_all):
 
         crop = d_crop[keyname]
         #save inftemps
-        d_inftemp['%s' % i], inf_temp, d_temp, d_plate = inflection_points(crop, plotname)
+        d_inftemp['%s' % i], inf_temp, d_temp, d_plate = inflection_points(crop, plotname, save_location)
         #create df output
         all_inf[plotname] = inf_temp
 
