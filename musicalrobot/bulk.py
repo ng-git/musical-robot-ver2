@@ -142,6 +142,7 @@ def plot_profiles (temp, plate_temp, save_location):
     """
 
     """
+
     for i in range(len(temp[:96])):
         fig, ax = plt.subplots(1,2,figsize=(15,5))
         # Plotting frame number vs sample temp
@@ -158,8 +159,7 @@ def plot_profiles (temp, plate_temp, save_location):
         ax[1].set_xlabel('Plate temperature($^{\circ}$C)')
         ax[1].set_ylabel('Sample temperature($^{\circ}$C)')
         
-        save_location = save_location + "/Sample " + str(i+1) + ".jpg"
-        plt.savefig(save_location)
+        plt.savefig(save_location + "/Sample " + str(i+1) + ".jpg")
 
     return
 
