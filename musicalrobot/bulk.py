@@ -138,7 +138,7 @@ def plot_image (crop, plotname):
 
     return
 
-def plot_profiles (temp, plate_temp, save_location, plotname):
+def plot_profiles (temp, plate_temp, save_location):
     """
 
     """
@@ -157,8 +157,8 @@ def plot_profiles (temp, plate_temp, save_location, plotname):
         ax[1].set_title('Plate temp vs Sample temp:Sample '+str(i+1))
         ax[1].set_xlabel('Plate temperature($^{\circ}$C)')
         ax[1].set_ylabel('Sample temperature($^{\circ}$C)')
-
-        plt.savefig(save_location + plotname)
+        save_location = save_location + "/Sample " + str(i+1) ".jpg"
+        plt.savefig(save_location)
 
     return
 
@@ -293,7 +293,7 @@ def inflection_points (crop, plotname, save_location):
     p_peaks, p_infl = ed.peak_detection(plate_temp)
     inf_temp = ed.inflection_point(temp, plate_temp, s_peaks, p_peaks)
 
-    plot_profiles(temp, plate_temp, save_location, plotname)
+    plot_profiles(temp, plate_temp, save_location)
 
     return inf_temp, inf_temp, temp, plate_temp
 
