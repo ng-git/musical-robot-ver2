@@ -31,7 +31,7 @@ def dict_pack (d_files, d_names, d_crop, d_inftemp):
         Nested dictionary of all of the needed dictonary
 
     """
-    d_all = {'d_files' : d_files, 'd_names' : d_names, 'd_crop' : d_crop, 'd_inftemp': d_inftemp}
+    d_all = {'d_files' : d_files, 'd_names' : d_names, 'd_crop' : d_crop, 'd_inftemp': d_inftemp, 'd_temp' : d_temp, 'd_plate' : d_plate}
 
     return d_all
 
@@ -64,6 +64,8 @@ def dict_unpack (d_all):
     d_names = d_all['d_names']
     d_crop = d_all['d_crop']
     d_inftemp = d_all['d_inftemp']
+    d_temp = d_temp['d_temp']
+    d_plate = d_plate['d_plate']
 
     return d_files, d_names, d_crop, d_inftemp
 
@@ -133,6 +135,33 @@ def plot_image (crop, plotname):
     plt.title(plotname)
     plt.show()
 
+    return
+
+def plot_profiles (cv_file_names, d_temp, d_plate, save_location):
+    """
+
+    """
+    for i,file in enumerate(cv_file_names):
+        temp = d_temps['%s' % i]
+        plate_temp = d_plate['%s' % i]
+
+        for i in range(len(temp[:15])):
+            fig, ax = plt.subplots(1,2,figsize=(15,5))
+            # Plotting frame number vs sample temp
+            frame_number = np.linspace(1,len(temp[i]),len(temp[i]))
+            #plot number 1
+            ax[0].scatter(frame_number, temp[i], s=0.5)
+            ax[0].set_title('Frame number vs Sample temp:Sample '+str(i+1))
+            ax[0].set_xlabel('Frame_number')
+            ax[0].set_ylabel('Sample temperature($^{\circ}$C)')
+
+            # Plotting plate temp vs sample temp
+            ax[1].scatter(plate_temp[i], temp[i], s=0.5)
+            ax[1].set_title('Plate temp vs Sample temp:Sample '+str(i+1))
+            ax[1].set_xlabel('Plate temperature($^{\circ}$C)')
+            ax[1].set_ylabel('Sample temperature($^{\circ}$C)')
+
+        plt.savefig(save_location +str(file))
     return
 
 
@@ -232,7 +261,7 @@ def auto_crop (tocrop, plotname):
     return crop
 
 
-def inflection_points (crop):
+def inflection_points (crop, d_temp, d_plate):
     """
     This is a rewrap of the inflection point analysis function using the additive
         rows and columns to find the centriods. All function are the same, but
@@ -266,7 +295,7 @@ def inflection_points (crop):
     p_peaks, p_infl = ed.peak_detection(plate_temp)
     inf_temp = ed.inflection_point(temp, plate_temp, s_peaks, p_peaks)
 
-    return inf_temp, inf_temp
+    return inf_temp, inf_temp, temp, plate_temp
 
 def bulk_crop (cv_file_names, location, d_all):
     """
@@ -358,7 +387,7 @@ def bulk_analyze (cv_file_names, d_all):
 
         crop = d_crop[keyname]
         #save inftemps
-        d_inftemp['%s' % i], inf_temp = inflection_points(crop)
+        d_inftemp['%s' % i], inf_temp, d_temp, d_plate = inflection_points(crop)
         #create df output
         all_inf[plotname] = inf_temp
 
