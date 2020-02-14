@@ -6,7 +6,7 @@ import musicalrobot
 from musicalrobot import edge_detection as ed
 from musicalrobot import pixel_analysis as pa
 
-def dict_pack (d_files, d_names, d_crop, d_inftemp):
+def dict_pack (d_files, d_names, d_crop, d_inftemp, d_temp, d_plate):
     """
     Function is used within the auto_crop function to  crop using the inputs
     given by the user.
@@ -322,7 +322,7 @@ def bulk_crop (cv_file_names, location, d_all):
         Nested dictionary of all of the needed dictonary, Should contain all the
         new additions from the functions
     """
-    d_files, d_names, d_crop, d_inftemp = dict_unpack(d_all)
+    d_files, d_names, d_crop, d_inftemp, d_temp, d_plate = dict_unpack(d_all)
 
     for i,file in enumerate(cv_file_names):
         #file input
@@ -345,7 +345,7 @@ def bulk_crop (cv_file_names, location, d_all):
         #auto crops
         d_crop['%s' % i], crop = choose_crop(tocrop, plotname)
 
-    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp)
+    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp, d_temp, d_plate)
 
     return d_all
 
@@ -375,7 +375,7 @@ def bulk_analyze (cv_file_names, d_all):
         columns will have the file name and the rows will have the well index
 
     """
-    d_files, d_names, d_crop, d_inftemp = dict_unpack(d_all)
+    d_files, d_names, d_crop, d_inftemp, d_temp, d_plate = dict_unpack(d_all)
 
     all_inf = pd.DataFrame()
 
@@ -389,7 +389,7 @@ def bulk_analyze (cv_file_names, d_all):
         #create df output
         all_inf[plotname] = inf_temp
 
-    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp)
+    d_all = dict_pack(d_files, d_names, d_crop, d_inftemp, d_temp, d_plate)
 
     return d_all, all_inf
 
