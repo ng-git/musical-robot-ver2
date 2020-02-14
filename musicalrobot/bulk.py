@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import musicalrobot
+import os
 
 from musicalrobot import edge_detection as ed
 from musicalrobot import pixel_analysis as pa
