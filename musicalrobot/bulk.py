@@ -141,7 +141,7 @@ def plot_profiles (temp, plate_temp, save_location, plotname):
     """
 
     """
-    for i in range(len(temp[:15])):
+    for i in range(len(temp[:96])):
         fig, ax = plt.subplots(1,2,figsize=(15,5))
         # Plotting frame number vs sample temp
         frame_number = np.linspace(1,len(temp[i]),len(temp[i]))
@@ -157,7 +157,7 @@ def plot_profiles (temp, plate_temp, save_location, plotname):
         ax[1].set_xlabel('Plate temperature($^{\circ}$C)')
         ax[1].set_ylabel('Sample temperature($^{\circ}$C)')
 
-    plt.savefig(save_location + plotname)
+        plt.savefig(save_location + plotname)
 
     return
 
@@ -350,7 +350,7 @@ def bulk_crop (cv_file_names, location, d_all):
 
     return d_all
 
-def bulk_analyze (cv_file_names, d_all, save_location):
+def bulk_analyze (cv_file_names, d_all):
     """
     Wrapper for all of the bulk analysis functions. Wraps through all of the
         files in the inputed folder. Runs analysis functions and then continues
@@ -383,6 +383,10 @@ def bulk_analyze (cv_file_names, d_all, save_location):
     for i, file in enumerate (cv_file_names):
         plotname = d_names[str(i)]
         keyname = str(i)
+
+        save_location = 'temp_profiles/' + plotname
+        if not os.path.exists(save_location):
+            os.makedirs(save_location)
 
         crop = d_crop[keyname]
         #save inftemps
