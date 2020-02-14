@@ -157,7 +157,8 @@ def plot_profiles (temp, plate_temp, save_location):
         ax[1].set_title('Plate temp vs Sample temp:Sample '+str(i+1))
         ax[1].set_xlabel('Plate temperature($^{\circ}$C)')
         ax[1].set_ylabel('Sample temperature($^{\circ}$C)')
-        save_location = save_location + "/Sample " + str(i+1) ".jpg"
+        
+        save_location = save_location + "/Sample " + str(i+1) + ".jpg"
         plt.savefig(save_location)
 
     return
