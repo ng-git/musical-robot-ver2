@@ -64,10 +64,10 @@ def dict_unpack (d_all):
     d_names = d_all['d_names']
     d_crop = d_all['d_crop']
     d_inftemp = d_all['d_inftemp']
-    d_temp = d_temp['d_temp']
-    d_plate = d_plate['d_plate']
+    d_temp = d_all['d_temp']
+    d_plate = d_all['d_plate']
 
-    return d_files, d_names, d_crop, d_inftemp
+    return d_files, d_names, d_crop, d_inftemp, d_temp, d_plate
 
 def image_crop (tocrop, top, bottom, left, right):
     """
