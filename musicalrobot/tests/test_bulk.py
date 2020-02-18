@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import musicalrobot
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from musicalrobot import edge_detection as ed
-from musicalrobot import pixel_analysis as pa
-from musicalrobot import bulk as bk
+import edge_detection as ed
+import pixel_analysis as pa
+import bulk as bk
 
 def test_image_crop ():
     """

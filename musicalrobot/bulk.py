@@ -290,8 +290,8 @@ def inflection_points (crop, plotname, save_location):
 
     temp, plate_temp = pa.pixel_intensity(sample_location, crop, 'Row', 'Column', 'plate_location')
 
-    s_peaks, s_infl = ed.peak_detection(temp)
-    p_peaks, p_infl = ed.peak_detection(plate_temp)
+    s_peaks, s_infl = ed.peak_detection(temp, plate_temp, 'Sample')
+    p_peaks, p_infl = ed.peak_detection(temp, plate_temp, 'Plate')
     inf_temp = ed.inflection_point(temp, plate_temp, s_peaks, p_peaks)
 
     plot_profiles(temp, plate_temp, save_location)
