@@ -21,6 +21,7 @@ from scipy.signal import find_peaks
 from skimage.restoration import denoise_tv_chambolle
 from irtemp import centikelvin_to_celsius
 from edge_detection import inflection_point
+from scipy.interpolate import interp1d
 
 ##########################################################################################################################################################################
 ##########################################################################################################################################################################
