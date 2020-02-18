@@ -11,6 +11,7 @@ import edge_detection
 
 from skimage import io
 from skimage import feature
+from skimage.draw import circle
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.measure import label
 from skimage.measure import regionprops
@@ -250,11 +251,13 @@ def pixel_intensity(sample_location, frames, x_name, y_name, plate_name):
         temp_well = []
         plate_well_temp = []
         for frame in frames:
+            rr, cc = circle(x[i], y[i], radius = 1)
+            sample_intensity = np.mean(frame[rr,cc])
             temp_well.append(centikelvin_to_celsius(frame[x[i]][y[i]]))
             plate_well_temp.append(centikelvin_to_celsius(frame[p[i]][y[i]]))
         temp.append(temp_well)
         plate_temp.append(plate_well_temp)
-    return temp,plate_temp
+    return temp, plate_temp
 
 
 ##### Wrapping Function ######
@@ -295,9 +298,9 @@ def pixel_temp(frames,n_frames,n_columns,n_rows):
     # and plate locations in each frame.
     temp, plate_temp = pixel_intensity(sample_location, frames, x_name = 'Row', y_name = 'Column', plate_name = 'plate_location')
     #Function to obtain the peaks in sample temperature profile
-    s_peaks, s_infl = edge_detection.peak_detection(temp)
+    s_peaks, s_infl = edge_detection.peak_detection(temp, plate_temp, 'Sample')
     # Function to obtain the peaks in plate location temperature profile
-    p_peaks, p_infl = edge_detection.peak_detection(plate_temp)
+    p_peaks, p_infl = edge_detection.peak_detection(temp, plate_temp, 'Plate')
     # Function to obtain the inflection point(melting point) from the temperature profile.
     inf_temp = inflection_point(temp, plate_temp, s_peaks, p_peaks)
     # Dataframe with sample location (row and column coordinates) and respective inflection point.

@@ -1,8 +1,5 @@
 import tkinter as tk
 from tkinter import filedialog
-from pandas import DataFrame
-import pandas as pd
-import numpy as np
 
 
 # Function: Exports data as a csv for user use
@@ -11,42 +8,48 @@ import numpy as np
 # Output: no output - prompt to save the data to a csv
 def export_csv(final_data):
     '''
-    Exports the dataframe of the run into a csv file to be saved or modifed as desired
-    
+    Exports the dataframe of the run into a csv file to be saved or
+    modifed as desired
+
     Parameters
     -----------
     final_data : Dataframe
-        A dataframe containing the final melting point data of all the samples.
+        A dataframe containing the final melting point
+        data of all the samples.
 
     Returns
     --------
-    Prompt to save the data to a csv. 
+    Prompt to save the data to a csv.
     '''
     global df
     df = final_data
 
-    root= tk.Tk()
+    root = tk.Tk()
 
-    canvas1 = tk.Canvas(root, width = 300, height = 300, bg = 'lightgray', relief = 'raised')
+    canvas1 = tk.Canvas(root, width=300, height=300, bg='lightgray',
+                        relief='raised')
     canvas1.pack()
 
     root.attributes("-topmost", True)
 
-    def exportCSV ():
+    def exportCSV():
         global df
 
-        export_file_path = filedialog.asksaveasfilename(defaultextension='.csv')
-        df.to_csv (export_file_path, index = None, header=True)
+        export_file_path = filedialog.asksaveasfilename(defaultextension
+                                                        ='.csv')
+        df.to_csv(export_file_path, index=None, header=True)
 
-    saveAsButton_CSV = tk.Button(text='Export CSV', command=exportCSV, bg='green', fg='white', font=('helvetica', 12, 'bold'))
+    saveAsButton_CSV = tk.Button(text='Export CSV', command=exportCSV,
+                                 bg='green', fg='white',
+                                 font=('helvetica', 12, 'bold'))
     canvas1.create_window(150, 150, window=saveAsButton_CSV)
 
     root.mainloop()
     return
 
 #  !! These functions/tests are still under development
-# They relate specifically to the OPENTRONS pipetting robot, and will be refined
-# for inner-lab use of the package/OPENTRONS combination.
+# They relate specifically to the OPENTRONS pipetting robot,
+# and will be refined for inner-lab use of the package/OPENTRONS combination.
 
 
 # Function: adapts the pipetting order to the temperature reading order
@@ -55,7 +58,8 @@ def export_csv(final_data):
 # Output: reordered list of named compoents
 # def molfrac_prep(DES_molfrac):
 #     '''Adapts the pipetting order to the temperature reading order'''
-#     #!! Assumes a 96 well plate in the opentrons pipetting robot with 2 components
+#     #!! Assumes a 96 well plate in the opentrons pipetting
+#         robot with 2 components
 #     number = len(DES_molfrac[0])
 #     array1 = np.zeros((8,12))
 #     array2 = np.zeros((8,12))
@@ -104,8 +108,10 @@ def export_csv(final_data):
 # Step: collects all of the created lists, combines and labels the data
 # Input: all of the final data lists
 # Output: dataframe of final info (mol inputs, melting temps, sample index)
-# def create_dataframe_DES(all_melt, all_possible, samples, ordered1, ordered2):
-#     '''Exports the dataframe of the run into a csv file to be saved or modifed as desired'''
+# def create_dataframe_DES(all_melt, all_possible,
+#                          samples, ordered1, ordered2):
+#     '''Exports the dataframe of the run into a
+#        csv file to be saved or modifed as desired'''
 #     all_samples = []
 #     for i in range(samples):
 #         all_samples.append(i)
@@ -124,7 +130,8 @@ def export_csv(final_data):
 # Input: all of the final data lists
 # Output: dataframe of final info (mol inputs, melting temps, sample index)
 # def create_dataframe(all_melt, all_possible, samples):
-#     '''Exports the dataframe of the run into a csv file to be saved or modifed as desired'''
+#     '''Exports the dataframe of the run into a csv
+#        file to be saved or modifed as desired'''
 #     all_samples = []
 #     for i in range(samples):
 #         all_samples.append(i)

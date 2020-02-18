@@ -137,7 +137,7 @@ def test_sample_peaks():
     regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
     temp, plate_temp = edge_detection.sample_temp(sorted_regprops, crop_frame)
-    s_peaks, s_infl = edge_detection.peak_detection(temp)
+    s_peaks, s_infl = edge_detection.peak_detection(temp, plate_temp, 'Sample')
     assert isinstance(s_peaks, list), 'Output is not a list'
     assert isinstance(s_infl, list), 'Output is not a list'
     assert len(s_peaks) == n_samples, 'Wrong number of peaks detected'
@@ -158,8 +158,8 @@ def test_inflection_point():
     regprops = edge_detection.regprop(labeled_samples, crop_frame, n_rows, n_columns)
     sorted_regprops = edge_detection.sort_regprops(regprops, n_columns, n_rows)
     temp, plate_temp = edge_detection.sample_temp(sorted_regprops, crop_frame)
-    s_peaks, s_infl = edge_detection.peak_detection(temp)
-    p_peaks, p_infl = edge_detection.peak_detection(plate_temp)
+    s_peaks, s_infl = edge_detection.peak_detection(temp, plate_temp, 'Sample')
+    p_peaks, p_infl = edge_detection.peak_detection(temp, plate_temp, 'Plate')
     inf_temp = edge_detection.inflection_point(temp, plate_temp, s_peaks, p_peaks)
     assert isinstance(inf_temp, list), 'Output is not a list'
     assert len(inf_temp) == n_samples, 'Wrong number of melting points determined'
