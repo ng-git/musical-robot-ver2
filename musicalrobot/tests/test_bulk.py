@@ -47,7 +47,7 @@ def test_image_crop ():
     bottom = 10
 
     #running
-    crop = bk.image_crop(tocrop, left, right, top, bottom)
+    #crop = bk.image_crop(tocrop, left, right, top, bottom)
 
     #asserts
     #assert isinstance(crop, np.ndarray), "output in not an array"
@@ -113,7 +113,7 @@ def test_choose_crop ():
     plotname = 'DA_ST_Mid_50_1'
 
     #running
-    crop, crop = bk.choose_crop(tocrop, plotname)
+    #crop, crop = bk.choose_crop(tocrop, plotname)
 
     #asserts
 
@@ -145,7 +145,7 @@ def test_auto_crop ():
     plotname = 'DA_ST_Mid_50_1'
 
     #Running
-    crop = bk.auto_crop(tocrop, plotname)
+    #crop = bk.auto_crop(tocrop, plotname)
 
     #asserts
 
@@ -181,10 +181,10 @@ def test_inflection_points ():
     bottom = 10
     plotname = 'DA_ST_Mid_50_1'
 
-    crop = bk.image_crop(tocrop, left, right, top, bottom)
+    #crop = bk.image_crop(tocrop, left, right, top, bottom)
 
     #running
-    inf_temp = bk.inflection_points(crop)
+    #inf_temp = bk.inflection_points(crop)
 
     #asserts
 
