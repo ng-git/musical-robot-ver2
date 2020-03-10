@@ -40,7 +40,7 @@ def test_image_crop ():
 
     """
     #set Inputs
-    tocrop = ed.input_file('../data/8_15_19_Dodecanoic_acid.tiff')
+    tocrop = ed.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     left = 3
     right = 5
     top = 3
@@ -71,7 +71,7 @@ def test_plot_image ():
     No returns : will print the plot
 
     """
-    tocrop = ed.input_file('../data/8_15_19_Dodecanoic_acid.tiff')
+    tocrop = ed.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     left = 3
     right = 5
     top = 3
@@ -109,7 +109,7 @@ def test_choose_crop ():
 
     """
     #Inputs
-    tocrop = ed.input_file('../data/8_15_19_Dodecanoic_acid.tiff')
+    tocrop = ed.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     plotname = 'DA_ST_Mid_50_1'
 
     #running
@@ -141,7 +141,7 @@ def test_auto_crop ():
         The array of the tiff file with the requested columns/rows removed
     """
     #inputs
-    tocrop = ed.input_file('../data/8_15_19_Dodecanoic_acid.tiff')
+    tocrop = ed.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     plotname = 'DA_ST_Mid_50_1'
 
     #Running
@@ -174,7 +174,7 @@ def test_inflection_points ():
 
     """
     #Inputs
-    tocrop = ed.input_file('../data/8_15_19_Dodecanoic_acid.tiff')
+    tocrop = ed.input_file('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
     left = 3
     right = 5
     top = 3
