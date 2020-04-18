@@ -96,12 +96,12 @@ def edge_detection(frames, n_samples):
     '''
     for size in range(15, 9, -1):
         for thres in range(1500, 900, -100):
-            edges = feature.canny(frames[-1]/thres)
+            edges = feature.canny(frames[0]/thres)
             filled_samples = binary_fill_holes(edges)
             cl_samples = remove_small_objects(filled_samples, min_size=size)
             labeled_samples = label(cl_samples)
             props = regionprops(labeled_samples, intensity_image=frames[0])
-            plt.imshow(cl_samples)  # for debugging
+            # plt.imshow(cl_samples)  # for debugging
             if len(props) == n_samples:
                 break
 #             if thres == 1000 and len(props) != n_samples:
@@ -112,7 +112,7 @@ def edge_detection(frames, n_samples):
     if size == 10 and thres == 1000 and len(props) != n_samples:
         print('Not all the samples are being recognized with the set \
             minimum size and threshold range')
-    plt.show()  # for debugging
+    # plt.show()  # for debugging
     return labeled_samples
 
 
