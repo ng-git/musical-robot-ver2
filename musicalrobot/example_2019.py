@@ -24,6 +24,6 @@ flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_tem
 plt.imshow(flip_frames[0])
 plt.scatter(sorted_regprops[0]['Plate_coord'],sorted_regprops[0]['Row'],c='orange',s=6)
 plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
-plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
+# plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 
 plt.show()

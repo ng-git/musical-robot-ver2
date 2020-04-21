@@ -4,7 +4,7 @@ import numpy as np
 from scipy import ndimage
 from skimage.transform import rescale
 from skimage import exposure
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, binarize
 
 # Importing the required modules
 from musicalrobot import irtemp
@@ -20,10 +20,10 @@ print(type(frames))
 
 crop_frame = []
 for frame in frames:
-    # frame = normalize(frame, norm='max')
+    frame = normalize(frame, norm='max')
     # frame = frame % 0.89
-    crop_frame.append(frame[35:85, 40:120])
-    # crop_frame.append(frame[20:100, 15:140])
+    # crop_frame.append(frame[35:85, 40:120])
+    crop_frame.append(frame[20:100, 15:140])
     # crop_frame.append(frame)
 
 # result = crop_frame
@@ -38,27 +38,54 @@ for frame in frames:
 #     crop_frame[i] = exposure.adjust_gamma(crop_frame[i], gamma=2, gain=1)
 
 #  sharpening image
-filter_blurred_f = ndimage.gaussian_filter(crop_frame, 1)
-# alpha = 15
+filter_blurred_f = ndimage.gaussian_filter(crop_frame, 0.1)
+# alpha = 1
 alpha = 0
 result = crop_frame + alpha * (crop_frame - filter_blurred_f)
 
 f_2 = plt.figure(2)
 # plt.imshow(result[-1], cmap='Greys', vmin=32700, vmax=33000)
-# plt.imshow(result[-1], cmap='Greys')
-plt.imshow(result[0])
+# plt.imshow(result[0], cmap='Greys')
+# plt.imshow(np.power(result[0],2), cmap='Greys')
+# plt.imshow(result[0] - result.mean(0))
+# plt.imshow(np.power(result[0] - result.mean(0),1), cmap='Greys')  # background removal
+
+# gauss = ndimage.gaussian_filter(result[0], sigma=5)
+# plt.imshow(gauss, cmap='gray')
+
+im = result[0]
+dx = ndimage.sobel(im, 0)  # horizontal derivative
+dy = ndimage.sobel(im, 1)  # vertical derivative
+mag1 = np.hypot(dx, dy)  # magnitude
+mag1 *= 255.0 / np.max(mag1)  # normalize (Q&D)
+
+im = result[-1] - result.mean(0)
+dx = ndimage.sobel(im, 0)  # horizontal derivative
+dy = ndimage.sobel(im, 1)  # vertical derivative
+mag2 = np.hypot(dx, dy)  # magnitude
+mag2 *= 255.0 / np.max(mag2)  # normalize (Q&D)
+
+# mag = mag1
+# mag = mag2
+mag = mag1+mag2
+# mag = normalize(mag,norm='max')
+# plt.imshow(binarize(result[-1]-result.mean(0)), cmap='Greys')
+# plt.imshow(result[0])
+plt.imshow(mag, cmap='Greys')
+
+# print(np.amin(result[0]))
 plt.colorbar()
 
 # plt.clim(30800, 30300)
 
-flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
+# flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
 
 # Plotting the original image with the samples
 # and centroid and plate location
-plt.imshow(flip_frames[0])
-plt.scatter(sorted_regprops[0]['Plate_coord'],sorted_regprops[0]['Row'],c='orange',s=6)
-plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
-plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
+# plt.imshow(flip_frames[0])
+# plt.scatter(sorted_regprops[0]['Plate_coord'],sorted_regprops[0]['Row'],c='orange',s=6)
+# plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
+# plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 
 
 plt.show()
