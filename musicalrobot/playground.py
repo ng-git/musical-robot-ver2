@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 from skimage.transform import rescale
-from skimage import exposure
+from skimage import filters
 from sklearn.preprocessing import normalize, binarize
 import math
 
@@ -12,31 +12,26 @@ from musicalrobot import irtemp
 from musicalrobot import edge_detection_MN as ed
 from musicalrobot import pixel_analysis as pa
 
-# frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
+frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
 # frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
-frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
+# frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
 
 print(frames.shape)
 print(type(frames))
 
 crop_frame = []
 for frame in frames:
-    frame = normalize(frame, norm='max')
+    # frame = normalize(frame, norm='max')
+    # frame = frame/frame.max()
     # frame = frame % 0.89
     crop_frame.append(frame[35:85, 40:120])
     # crop_frame.append(frame[20:100, 15:140])
     # crop_frame.append(frame)
 
-# result = crop_frame
-for i in range(len(crop_frame)):
-    crop_frame[i] = rescale(crop_frame[i], scale=(2, 2))
-
-# f_1 = plt.figure(1)
-# plt.imshow(crop_frame[-1], cmap='Greys')
-
-# increasing gamma
+# upsizing
 # for i in range(len(crop_frame)):
-#     crop_frame[i] = exposure.adjust_gamma(crop_frame[i], gamma=2, gain=1)
+#     crop_frame[i] = rescale(crop_frame[i], scale=(2, 2))
+
 
 #  sharpening image
 filter_blurred_f = ndimage.gaussian_filter(crop_frame, 0.1)
@@ -45,70 +40,74 @@ alpha = 0
 result = crop_frame + alpha * (crop_frame - filter_blurred_f)
 
 # plt.imshow(result[-1], cmap='Greys', vmin=32700, vmax=33000)
-# plt.imshow(result[0], cmap='Greys')
+plt.figure(1)
+plt.imshow(result[0])
 # plt.imshow(np.power(result[0],2), cmap='Greys')
 # plt.imshow(result[0] - result.mean(0))
 # plt.imshow(np.power(result[0] - result.mean(0),1), cmap='Greys')  # background removal
 
+
+# plt.show()
+
+# gaussian fiter
 # gauss = ndimage.gaussian_filter(result[0], sigma=5)
 # plt.imshow(gauss, cmap='gray')
 
-fig = plt.figure(2)
-
-im = result[0]
-dx = ndimage.sobel(im, 0)  # horizontal derivative
-dy = ndimage.sobel(im, 1)  # vertical derivative
-mag1 = np.hypot(dx, dy)  # magnitude
-mag1 *= 255.0 / np.max(mag1)  # normalize (Q&D)
-
-im = result[-1]
-dx = ndimage.sobel(im, 0)  # horizontal derivative
-dy = ndimage.sobel(im, 1)  # vertical derivative
-mag2 = np.hypot(dx, dy)  # magnitude
-mag2 *= 255.0 / np.max(mag2)  # normalize (Q&D)
-
-im = result[0] - result.mean(0)
-dx = ndimage.sobel(im, 0)  # horizontal derivative
-dy = ndimage.sobel(im, 1)  # vertical derivative
-mag3 = np.hypot(dx, dy)  # magnitude
-mag3 *= 255.0 / np.max(mag3)  # normalize (Q&D)
-
-im = result[-1] - result.mean(0)
-dx = ndimage.sobel(im, 0)  # horizontal derivative
-dy = ndimage.sobel(im, 1)  # vertical derivative
-mag4 = np.hypot(dx, dy)  # magnitude
-mag4 *= 255.0 / np.max(mag4)  # normalize (Q&D)
-
-
-# mag = mag1
-# mag = mag2
-mag = mag1+mag2
-
-ax1 = fig.add_subplot(221)  # left side
-ax2 = fig.add_subplot(222)  # right side
-ax3 = fig.add_subplot(223)  # right side
-ax4 = fig.add_subplot(224)  # right side
-ax1.imshow(mag1)  # init
-ax2.imshow(mag2)  # fin
-ax3.imshow(mag3)  # avg init
-ax4.imshow(mag4)  # avg fin
-# ax5.imshow(mag4+mag3)
-# plt.show()
+# # sobel filter
+# fig = plt.figure(2)
+# im = result[0]
+# dx = ndimage.sobel(im, 0)  # horizontal derivative
+# dy = ndimage.sobel(im, 1)  # vertical derivative
+# mag1 = np.hypot(dx, dy)  # magnitude
+# mag1 *= 255.0 / np.max(mag1)  # normalize (Q&D)
+#
+# im = result[-1]
+# dx = ndimage.sobel(im, 0)  # horizontal derivative
+# dy = ndimage.sobel(im, 1)  # vertical derivative
+# mag2 = np.hypot(dx, dy)  # magnitude
+# mag2 *= 255.0 / np.max(mag2)  # normalize (Q&D)
+#
+# im = result[0] - result.mean(0)
+# dx = ndimage.sobel(im, 0)  # horizontal derivative
+# dy = ndimage.sobel(im, 1)  # vertical derivative
+# mag3 = np.hypot(dx, dy)  # magnitude
+# mag3 *= 255.0 / np.max(mag3)  # normalize (Q&D)
+#
+# im = result[-1] - result.mean(0)
+# dx = ndimage.sobel(im, 0)  # horizontal derivative
+# dy = ndimage.sobel(im, 1)  # vertical derivative
+# mag4 = np.hypot(dx, dy)  # magnitude
+# mag4 *= 255.0 / np.max(mag4)  # normalize (Q&D)
+#
+# ax1 = fig.add_subplot(221)  # left side
+# ax2 = fig.add_subplot(222)  # right side
+# ax3 = fig.add_subplot(223)  # right side
+# ax4 = fig.add_subplot(224)  # right side
+# ax1.imshow(mag1 / mag1.max())  # init
+# ax2.imshow(mag2)  # fin
+# ax3.imshow(mag3)  # avg init
+# ax4.imshow(mag4)  # avg fin
+# # plt.show()
 
 
-fig = plt.figure(3)
+# fig = plt.figure(3)
 # plt.imshow(binarize(result[-1]-result.mean(0)), cmap='Greys')
-mixture = mag1 + mag4
-plt.imshow(mixture)
-plt.colorbar()
-# plt.imshow(mag, cmap='Greys')
 
-# print(np.amin(result[0]))
-# fig.colorbar()
 
-# plt.clim(30800, 30300)
+sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
 
-# flip_frames, sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
+
+# fig = plt.figure(3)
+im = result[0]/result[0].max()
+dx = ndimage.sobel(im, 0)  # horizontal derivative
+dy = ndimage.sobel(im, 1)  # vertical derivative
+# mag1 = np.hypot(dx, dy)  # magnitude
+# mag1 *= 255.0 / np.max(mag1)  # normalize (Q&D)
+
+mag1 = filters.sobel(im)
+mag1 = mag1 > mag1.mean()*2
+plt.imshow(mag1)
+plt.show()
 
 # Plotting the original image with the samples
 # and centroid and plate location
@@ -117,5 +116,6 @@ plt.colorbar()
 # plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
 # plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 
+ed.edge_detection(frames,n_smapels)
 
-plt.show()
+# plt.show()

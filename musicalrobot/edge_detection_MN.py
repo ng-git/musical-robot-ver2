@@ -15,6 +15,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.measure import label
 from skimage.measure import regionprops
 from skimage.morphology import remove_small_objects
+from skimage import filters
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from scipy.interpolate import BSpline
@@ -75,7 +76,7 @@ def flip_frame(frames):
 
 
 # Function to detect edges, fill and label the samples.
-def edge_detection(frames, n_samples):
+def edge_detection(frames, n_samples, method='canny'):
     '''
     To detect the edges of the wells, fill and label them to
     determine their centroids.
@@ -94,25 +95,67 @@ def edge_detection(frames, n_samples):
         All the samples in the frame are labeled
         so that they can be used as props to get pixel data.
     '''
-    for size in range(15, 9, -1):
-        for thres in range(1500, 900, -100):
-            edges = feature.canny(frames[0]/thres)
+
+    labeled_samples = None
+    size = None
+    thres = None
+    props = None
+    if method is 'canny':
+        for size in range(15, 9, -1):
+            for thres in range(1500, 900, -100):
+                edges = feature.canny(frames[0]/thres)
+
+                # fig = plt.figure(2)  # for debugging
+                # plt.imshow(edges)
+                # plt.colorbar()
+
+                filled_samples = binary_fill_holes(edges)
+                cl_samples = remove_small_objects(filled_samples, min_size=size)
+                labeled_samples = label(cl_samples)
+                props = regionprops(labeled_samples, intensity_image=frames[0])
+
+                # fig = plt.figure(3)
+                # plt.imshow(filled_samples)  # for debugging
+
+                if len(props) == n_samples:
+                    break
+    #             if thres == 1000 and len(props) != n_samples:
+    #                 print('Not all the samples are being recognized with
+    #                 the set threshold range for size ',size)
+            if len(props) == n_samples:
+                break
+        if size == 10 and thres == 1000 and len(props) != n_samples:
+            print('Not all the samples are being recognized with the set \
+                minimum size and threshold range')
+        # plt.show()  # for debugging
+
+    # use sobel edge detection method
+    if method is 'sobel':
+        for size in range(15, 9, -1):
+            # use sobel
+            edges = filters.sobel(frames[0])
+            edges = edges > edges.mean() * 2  # booleanize data
+
+            # fig = plt.figure(2)  # for debugging
+            # plt.imshow(edges)
+            # plt.colorbar()
+
+            #  fill holes and remove noise
             filled_samples = binary_fill_holes(edges)
             cl_samples = remove_small_objects(filled_samples, min_size=size)
             labeled_samples = label(cl_samples)
             props = regionprops(labeled_samples, intensity_image=frames[0])
-            # plt.imshow(cl_samples)  # for debugging
+
+            # fig = plt.figure(3)
+            # plt.imshow(filled_samples)  # for debugging
+
             if len(props) == n_samples:
                 break
-#             if thres == 1000 and len(props) != n_samples:
-#                 print('Not all the samples are being recognized with
-#                 the set threshold range for size ',size)
-        if len(props) == n_samples:
-            break
-    if size == 10 and thres == 1000 and len(props) != n_samples:
-        print('Not all the samples are being recognized with the set \
-            minimum size and threshold range')
-    # plt.show()  # for debugging
+        if size == 10 and len(props) != n_samples:
+            print('Not all the samples are being recognized with the set \
+                minimum size and threshold range')
+        # plt.show()  # for debugging
+
     return labeled_samples
 
 
