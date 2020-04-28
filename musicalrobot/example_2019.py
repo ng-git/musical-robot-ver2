@@ -1,10 +1,12 @@
+""" Complete run from musical robot 2019"""
+
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Importing the required modules
 from musicalrobot import irtemp
-from musicalrobot import edge_detection as ed
+from musicalrobot import edge_detection_MN as ed
 from musicalrobot import pixel_analysis as pa
 
 frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')

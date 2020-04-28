@@ -76,7 +76,7 @@ def flip_frame(frames):
 
 
 # Function to detect edges, fill and label the samples.
-def edge_detection(frames, n_samples, method='canny'):
+def edge_detection(frames, n_samples, method='canny', track=False):
     '''
     To detect the edges of the wells, fill and label them to
     determine their centroids.
@@ -107,7 +107,7 @@ def edge_detection(frames, n_samples, method='canny'):
 
                 # fig = plt.figure(2)  # for debugging
                 # plt.imshow(edges)
-                # plt.colorbar()
+                # plt.show()
 
                 filled_samples = binary_fill_holes(edges)
                 cl_samples = remove_small_objects(filled_samples, min_size=size)
@@ -206,8 +206,11 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             area[c] = prop.area
             perim[c] = prop.perimeter
             radius[c] = prop.equivalent_diameter/2
+            # TODO modify this circular cropping to rectangular
             rr, cc = circle(row[c], column[c], radius = radius[c]/3)
             intensity[c] = np.mean(frames[i][rr,cc])
+
+            # TODO: Modify this line for plate temp
             plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             plate_coord[c] = column[c]+radius[c]+3
             c = c + 1
@@ -453,21 +456,28 @@ def inflection_temp(frames, n_rows, n_columns):
     # Use the function 'edge_detection' to detect edges, fill and
     # label the samples.
     labeled_samples = edge_detection(frames, n_samples)
+
     # Use the function 'regprop' to determine centroids of all the samples
     regprops = regprop(labeled_samples, frames, n_rows, n_columns)
+
     # Use the function 'sort_regprops' to sort the dataframes in regprops
     sorted_regprops = sort_regprops(regprops, n_columns, n_rows)
+
     # Use the function 'sample_temp' to obtain temperature of samples
     # and plate temp
     s_temp, p_temp = sample_temp(sorted_regprops, frames)
+
     # Use the function 'sample_peaks' to determine the inflections points
     # and temperatures in sample temperature profiles
     s_peaks, s_infl = peak_detection(s_temp, p_temp, 'Sample')
+
     # Use the function 'plate_peaks' to determine the inflections
     # in plate temperature profiles
     p_peaks, p_infl = peak_detection(s_temp, p_temp, 'Plate')
+
     # Use the function 'infection_point' to obtain melting point of samples
     inf_temp = inflection_point(s_temp, p_temp, s_peaks, p_peaks)
+
     # Creating a dataframe with row and column coordinates
     # of sample centroid and its melting temperature (Inflection point).
     m_df = pd.DataFrame({'Row': regprops[0].Row, 'Column': regprops[0].Column,

@@ -4,8 +4,13 @@ import numpy as np
 from scipy import ndimage
 from skimage.transform import rescale
 from skimage import filters
+from skimage import feature
+from skimage.morphology import remove_small_objects
+from scipy.ndimage.morphology import binary_fill_holes
+
 from sklearn.preprocessing import normalize, binarize
 import math
+import cv2
 
 # Importing the required modules
 from musicalrobot import irtemp
@@ -23,7 +28,6 @@ crop_frame = []
 for frame in frames:
     # frame = normalize(frame, norm='max')
     # frame = frame/frame.max()
-    # frame = frame % 0.89
     crop_frame.append(frame[35:85, 40:120])
     # crop_frame.append(frame[20:100, 15:140])
     # crop_frame.append(frame)
@@ -53,7 +57,7 @@ plt.imshow(result[0])
 # gauss = ndimage.gaussian_filter(result[0], sigma=5)
 # plt.imshow(gauss, cmap='gray')
 
-# # sobel filter
+# TODO sobel
 # fig = plt.figure(2)
 # im = result[0]
 # dx = ndimage.sobel(im, 0)  # horizontal derivative
@@ -87,27 +91,43 @@ plt.imshow(result[0])
 # ax2.imshow(mag2)  # fin
 # ax3.imshow(mag3)  # avg init
 # ax4.imshow(mag4)  # avg fin
-# # plt.show()
-
+# plt.show()
 
 # fig = plt.figure(3)
 # plt.imshow(binarize(result[-1]-result.mean(0)), cmap='Greys')
 
+# TODO equalizing
+# img1 = np.uint8(cv2.normalize(crop_frame[0], None, 0, 255, cv2.NORM_MINMAX))
+# img1 = np.uint8(cv2.normalize(crop_frame[-1]-result.mean(0), None, 0, 255, cv2.NORM_MINMAX))
 
-sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
+# img_eq = cv2.equalizeHist(img1,0)  # not really good
+# clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+# img_eq = clahe.apply(img1)
+
+# plt.imshow(img_eq)
+# plt.show()
+
+# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
 
 
 # fig = plt.figure(3)
-im = result[0]/result[0].max()
-dx = ndimage.sobel(im, 0)  # horizontal derivative
-dy = ndimage.sobel(im, 1)  # vertical derivative
-# mag1 = np.hypot(dx, dy)  # magnitude
-# mag1 *= 255.0 / np.max(mag1)  # normalize (Q&D)
+# im = result[-1]/result[-1].max()
+# img_eq = result[-1] - result.mean(0)
 
-mag1 = filters.sobel(im)
-mag1 = mag1 > mag1.mean()*2
+# img_eq = result[0] - result.mean(0)
+img_eq = result[50] - result.mean(0)
+
+# TODO background compensation
+plt.figure(2)
+time = 0
+# time = len(result)-1
+img_eq = result[time] - result.mean(0)*time/(len(result)-1)
+
+mag1 = filters.sobel(img_eq)
+
+mag1 = mag1 > mag1.mean()*3
 plt.imshow(mag1)
-plt.show()
+# plt.show()
 
 # Plotting the original image with the samples
 # and centroid and plate location
@@ -116,6 +136,34 @@ plt.show()
 # plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
 # plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 
-ed.edge_detection(frames,n_smapels)
 
 # plt.show()
+
+fig = plt.figure(3)
+
+time = [0, 200, 400, 600, len(result)-1]
+# selected_frames = 0
+for i in range(5):
+    img_raw = result[time[i]]
+    fig.add_subplot(6, 5, i + 1).imshow(img_raw)
+
+    mag1 = filters.sobel(img_raw)
+    # mag1 = mag1 > mag1.mean() * 3
+    fig.add_subplot(6, 5, i + 6).imshow(mag1)
+
+    mag1 = filters.sobel(img_raw - result.mean(0))
+    # mag1 = mag1 > mag1.mean() * 3
+    fig.add_subplot(6, 5, i + 11).imshow(mag1)
+
+    mag1 = filters.sobel(result[time[i]] - result.mean(0)*time[i] / (len(result) - 1))
+    # mag1 = mag1 > mag1.mean() * 3
+    # mag1 = binary_fill_holes(mag1)
+    fig.add_subplot(6, 5, i + 16).imshow(mag1)
+
+    mag1 = feature.canny((img_raw) / 1500)
+    fig.add_subplot(6, 5, i + 21).imshow(mag1)
+
+    mag1 = feature.canny((img_raw - result.mean(0)) / 1500)
+    fig.add_subplot(6, 5, i + 26).imshow(mag1)
+
+plt.show()
