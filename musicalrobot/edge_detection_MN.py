@@ -128,6 +128,7 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             print('Not all the samples are being recognized with the set \
                 minimum size and threshold range')
         # plt.show()  # for debugging
+        return labeled_samples
 
     # use sobel edge detection method
     if method is 'sobel':
@@ -155,6 +156,25 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             print('Not all the samples are being recognized with the set \
                 minimum size and threshold range')
         # plt.show()  # for debugging
+        return labeled_samples
+
+    if track:
+        video_length = len(frames)
+        background = frames.mean(0)
+
+        for time in range(video_length):
+            # remove background proportional to time in video
+            img = frames[time] - background * time / (video_length - 1)
+            # apply sobel filter
+            edges = filters.sobel(img)
+            # booleanize image, only values 3x higher than avg is True
+            edges = edges > edges.mean() * 3
+
+            #  fill holes and remove noise
+            filled_samples = binary_fill_holes(edges)
+            cl_samples = remove_small_objects(filled_samples, min_size=size)
+            labeled_samples = label(cl_samples)
+            props = regionprops(labeled_samples, intensity_image=frames[0])
 
     return labeled_samples
 

@@ -46,6 +46,34 @@ result = crop_frame + alpha * (crop_frame - filter_blurred_f)
 # plt.imshow(result[-1], cmap='Greys', vmin=32700, vmax=33000)
 plt.figure(1)
 plt.imshow(result[0])
+
+# CV method to remove background
+# file_path = "../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff"
+
+# cap = cv2.VideoCapture(file_path)
+# # cap = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+# # print(cap.shape)
+# first_iter = True
+# result = None
+# while True:
+#     ret, frame = cap.read()
+#     if frame is None:
+#         break
+#
+#     if first_iter:
+#         avg = np.float32(frame)
+#         first_iter = False
+#
+#     cv2.accumulateWeighted(frame, avg, 0.005)
+#     result = cv2.convertScaleAbs(avg)
+#
+# plt.imshow(result)
+# plt.show()
+
+# cv2.imshow("result", result)
+# cv2.imwrite("averaged_frame.jpg", result)
+# cv2.waitKey(0)
+
 # plt.imshow(np.power(result[0],2), cmap='Greys')
 # plt.imshow(result[0] - result.mean(0))
 # plt.imshow(np.power(result[0] - result.mean(0),1), cmap='Greys')  # background removal
@@ -129,6 +157,25 @@ mag1 = mag1 > mag1.mean()*3
 plt.imshow(mag1)
 # plt.show()
 
+# plt.figure(20)
+# avg = result[0]
+# print(type(avg))
+# # time = len(result)
+# time = 2
+# # for i in range(time):
+# #     avg = result[i] + avg
+# # avg = avg/time
+# avg = result[0:time].mean(0)
+# plt.imshow(avg)
+# # plt.imshow(result[600])
+#
+#
+# plt.figure(21)
+# plt.imshow(result.mean(0))
+#
+# plt.show()
+
+
 # Plotting the original image with the samples
 # and centroid and plate location
 # plt.imshow(flip_frames[0])
@@ -145,25 +192,38 @@ time = [0, 200, 400, 600, len(result)-1]
 # selected_frames = 0
 for i in range(5):
     img_raw = result[time[i]]
-    fig.add_subplot(6, 5, i + 1).imshow(img_raw)
+    fig.add_subplot(7, 5, i + 1).imshow(img_raw)
 
+    # sobel
     mag1 = filters.sobel(img_raw)
     # mag1 = mag1 > mag1.mean() * 3
-    fig.add_subplot(6, 5, i + 6).imshow(mag1)
+    fig.add_subplot(7, 5, i + 6).imshow(mag1)
 
     mag1 = filters.sobel(img_raw - result.mean(0))
     # mag1 = mag1 > mag1.mean() * 3
-    fig.add_subplot(6, 5, i + 11).imshow(mag1)
+    fig.add_subplot(7, 5, i + 11).imshow(mag1)
 
     mag1 = filters.sobel(result[time[i]] - result.mean(0)*time[i] / (len(result) - 1))
     # mag1 = mag1 > mag1.mean() * 3
     # mag1 = binary_fill_holes(mag1)
-    fig.add_subplot(6, 5, i + 16).imshow(mag1)
+    fig.add_subplot(7, 5, i + 16).imshow(mag1)
 
-    mag1 = feature.canny((img_raw) / 1500)
-    fig.add_subplot(6, 5, i + 21).imshow(mag1)
+    # progressive background removal
+    adaptive_background = None
+    if time[i] is 0:
+        adaptive_background = 0
+    else:
+        adaptive_background = result[0:time[i]].mean(0)
+    mag1 = filters.sobel(img_raw - adaptive_background)
+    fig.add_subplot(7, 5, i + 21).imshow(mag1)
 
+    # canny
+    mag1 = feature.canny(img_raw / 1500)
+    fig.add_subplot(7, 5, i + 26).imshow(mag1)
+
+    # canny with background removal
     mag1 = feature.canny((img_raw - result.mean(0)) / 1500)
-    fig.add_subplot(6, 5, i + 26).imshow(mag1)
+    fig.add_subplot(7, 5, i + 31).imshow(mag1)
+
 
 plt.show()
