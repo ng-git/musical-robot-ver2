@@ -15,6 +15,7 @@ from scipy.ndimage.morphology import binary_fill_holes
 from skimage.measure import label
 from skimage.measure import regionprops
 from skimage.morphology import remove_small_objects
+from skimage import filters
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from scipy.interpolate import BSpline
@@ -75,7 +76,7 @@ def flip_frame(frames):
 
 
 # Function to detect edges, fill and label the samples.
-def edge_detection(frames, n_samples):
+def edge_detection(frames, n_samples, method='canny', track=False):
     '''
     To detect the edges of the wells, fill and label them to
     determine their centroids.
@@ -94,25 +95,67 @@ def edge_detection(frames, n_samples):
         All the samples in the frame are labeled
         so that they can be used as props to get pixel data.
     '''
-    for size in range(15, 9, -1):
-        for thres in range(1500, 900, -100):
-            edges = feature.canny(frames[0]/thres)
+
+    labeled_samples = None
+    size = None
+    thres = None
+    props = None
+    if method is 'canny':
+        for size in range(15, 9, -1):
+            for thres in range(1500, 900, -100):
+                edges = feature.canny(frames[0]/thres)
+
+                # fig = plt.figure(2)  # for debugging
+                # plt.imshow(edges)
+                # plt.show()
+
+                filled_samples = binary_fill_holes(edges)
+                cl_samples = remove_small_objects(filled_samples, min_size=size)
+                labeled_samples = label(cl_samples)
+                props = regionprops(labeled_samples, intensity_image=frames[0])
+
+                # fig = plt.figure(3)
+                # plt.imshow(filled_samples)  # for debugging
+
+                if len(props) == n_samples:
+                    break
+    #             if thres == 1000 and len(props) != n_samples:
+    #                 print('Not all the samples are being recognized with
+    #                 the set threshold range for size ',size)
+            if len(props) == n_samples:
+                break
+        if size == 10 and thres == 1000 and len(props) != n_samples:
+            print('Not all the samples are being recognized with the set \
+                minimum size and threshold range')
+        # plt.show()  # for debugging
+
+    # use sobel edge detection method
+    if method is 'sobel':
+        for size in range(15, 9, -1):
+            # use sobel
+            edges = filters.sobel(frames[0])
+            edges = edges > edges.mean() * 2  # booleanize data
+
+            # fig = plt.figure(2)  # for debugging
+            # plt.imshow(edges)
+            # plt.colorbar()
+
+            #  fill holes and remove noise
             filled_samples = binary_fill_holes(edges)
             cl_samples = remove_small_objects(filled_samples, min_size=size)
             labeled_samples = label(cl_samples)
             props = regionprops(labeled_samples, intensity_image=frames[0])
-            # plt.imshow(cl_samples)  # for debugging
+
+            # fig = plt.figure(3)
+            # plt.imshow(filled_samples)  # for debugging
+
             if len(props) == n_samples:
                 break
-#             if thres == 1000 and len(props) != n_samples:
-#                 print('Not all the samples are being recognized with
-#                 the set threshold range for size ',size)
-        if len(props) == n_samples:
-            break
-    if size == 10 and thres == 1000 and len(props) != n_samples:
-        print('Not all the samples are being recognized with the set \
-            minimum size and threshold range')
-    # plt.show()  # for debugging
+        if size == 10 and len(props) != n_samples:
+            print('Not all the samples are being recognized with the set \
+                minimum size and threshold range')
+        # plt.show()  # for debugging
+
     return labeled_samples
 
 
@@ -163,8 +206,11 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             area[c] = prop.area
             perim[c] = prop.perimeter
             radius[c] = prop.equivalent_diameter/2
+            # TODO modify this circular cropping to rectangular
             rr, cc = circle(row[c], column[c], radius = radius[c]/3)
             intensity[c] = np.mean(frames[i][rr,cc])
+
+            # TODO: Modify this line for plate temp
             plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             plate_coord[c] = column[c]+radius[c]+3
             c = c + 1
@@ -410,21 +456,28 @@ def inflection_temp(frames, n_rows, n_columns):
     # Use the function 'edge_detection' to detect edges, fill and
     # label the samples.
     labeled_samples = edge_detection(frames, n_samples)
+
     # Use the function 'regprop' to determine centroids of all the samples
     regprops = regprop(labeled_samples, frames, n_rows, n_columns)
+
     # Use the function 'sort_regprops' to sort the dataframes in regprops
     sorted_regprops = sort_regprops(regprops, n_columns, n_rows)
+
     # Use the function 'sample_temp' to obtain temperature of samples
     # and plate temp
     s_temp, p_temp = sample_temp(sorted_regprops, frames)
+
     # Use the function 'sample_peaks' to determine the inflections points
     # and temperatures in sample temperature profiles
     s_peaks, s_infl = peak_detection(s_temp, p_temp, 'Sample')
+
     # Use the function 'plate_peaks' to determine the inflections
     # in plate temperature profiles
     p_peaks, p_infl = peak_detection(s_temp, p_temp, 'Plate')
+
     # Use the function 'infection_point' to obtain melting point of samples
     inf_temp = inflection_point(s_temp, p_temp, s_peaks, p_peaks)
+
     # Creating a dataframe with row and column coordinates
     # of sample centroid and its melting temperature (Inflection point).
     m_df = pd.DataFrame({'Row': regprops[0].Row, 'Column': regprops[0].Column,
