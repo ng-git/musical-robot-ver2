@@ -495,10 +495,6 @@ def square_crop(frame, coordinate, length):
     -------------
     frame: array
        The array of the tiff file.
-    x: int
-       the x coordinate of the centroid
-    y: int
-       the y coordinate of the centroid
     coordinate: array
        the array of coordinates of the centroid [x, y]
     length: int
