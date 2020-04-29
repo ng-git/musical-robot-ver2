@@ -486,7 +486,7 @@ def inflection_temp(frames, n_rows, n_columns):
 
 
 # Function to crop a square image
-def square_crop(frame, x, y, length):
+def square_crop(frame, coordinate, length):
     '''
     takes a given frame, the coordinate of the centroid and the length of the square. The function will 
     crop the frame into square with a given side length.
@@ -499,6 +499,8 @@ def square_crop(frame, x, y, length):
        the x coordinate of the centroid
     y: int
        the y coordinate of the centroid
+    coordinate: array
+       the array of coordinates of the centroid [x, y]
     length: int
        side length of the square
     -------------
@@ -509,9 +511,10 @@ def square_crop(frame, x, y, length):
     -------------
     
     '''
-    x1 = x-length
-    x2 = x+length
-    y1 = y-length
-    y2 = y+length
+    x1 = int(coordinate[0] - length / 2)
+    x2 = int(coordinate[0] + length / 2)
+    y1 = int(coordinate[1] - length / 2)
+    y2 = int(coordinate[1] + length / 2)
+    assert x1 > 0 and x2 < len(frame.T) and y1 > 0 and y2 < len(frame), "The crop image is out of bounds."
     crop_image = frame[y1:y2,x1:x2]
     return crop_image
