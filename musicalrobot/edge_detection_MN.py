@@ -489,7 +489,8 @@ def inflection_temp(frames, n_rows, n_columns):
 def square_crop(frame, coordinate, length):
     '''
     takes a given frame, the coordinate of the centroid and the length of the square. The function will 
-    crop the frame into square with a given side length.
+    crop the frame into square with a given side length. If the crop square is out of bounds, it will
+    prompt "The crop image is out of bounds.".
     
     Parameters
     -------------
