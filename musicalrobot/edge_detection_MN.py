@@ -505,7 +505,7 @@ def square_crop(frame, x, y, length):
     
     Returns
     -------------
-    a square image
+    The array of the square image
     -------------
     
     '''
@@ -514,4 +514,4 @@ def square_crop(frame, x, y, length):
     y1 = y-length
     y2 = y+length
     crop_image = frame[y1:y2,x1:x2]
-    return plt.imshow(crop_image)
+    return crop_image
