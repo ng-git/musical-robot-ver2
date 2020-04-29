@@ -392,6 +392,7 @@ def inflection_temp(frames, n_rows, n_columns):
 
     '''
 
+
     # Determining the number of samples
     n_samples = n_columns * n_rows
     # Use the function 'flip_frame' to flip the frames horizontally
@@ -420,3 +421,35 @@ def inflection_temp(frames, n_rows, n_columns):
     m_df = pd.DataFrame({'Row': regprops[0].Row, 'Column': regprops[0].Column,
                         'Melting point': inf_temp})
     return sorted_regprops, s_temp, p_temp, inf_temp, m_df
+
+
+# Function to crop a square image
+def square_crop(frame, x, y, length):
+    '''
+    takes a given frame, the coordinate of the centroid and the length of the square. The function will 
+    crop the frame into square with a given side length.
+    
+    Parameters
+    -------------
+    frame: array
+       The array of the tiff file.
+    x: int
+       the x coordinate of the centroid
+    y: int
+       the y coordinate of the centroid
+    length: int
+       side length of the square
+    -------------
+    
+    Returns
+    -------------
+    a square image
+    -------------
+    
+    '''
+    x1 = x-length
+    x2 = x+length
+    y1 = y-length
+    y2 = y+length
+    crop_image = frame[y1:y2,x1:x2]
+    return plt.imshow(crop_image)
