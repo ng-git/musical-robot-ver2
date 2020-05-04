@@ -96,19 +96,103 @@ def edge_detection(frames, n_samples, method='canny', track=False):
         so that they can be used as props to get pixel data.
     '''
 
-    labeled_samples = None
-    size = None
-    thres = None
-    props = None
-    if method is 'canny':
-        for size in range(15, 9, -1):
-            for thres in range(1500, 900, -100):
-                edges = feature.canny(frames[0]/thres)
+    # when enable spatial tracking
+    if track:
+        # type cast to ndarray
+        if not isinstance(frames, np.ndarray):
+            frames_array = np.array(frames)
+        else:
+            frames_array = frames
+
+        video_length = len(frames_array)
+        video_with_label = np.empty(frames_array.shape)
+        background = frames_array.mean(0)
+        progressive_background = 0
+        alpha = 2
+
+        for time in range(video_length):
+            # remove background proportional to time in video
+            img_lin_bg = frames_array[time] - background * time / (video_length - 1)
+            # apply sobel filter
+            edges_lin_bg = filters.sobel(img_lin_bg)
+            #  booleanize with certain threshold alpha
+            edges_lin_bg = edges_lin_bg > edges_lin_bg * alpha
+            # erode edges and fill in holes
+            edges_lin_bg = ndimage.binary_erosion(edges_lin_bg)
+            edges_lin_bg = binary_fill_holes(edges_lin_bg)
+
+            # find progressive background
+            if time is 0:
+                progressive_background = 0
+            else:
+                progressive_background = frames_array[0:time].mean(0)
+            # remove background
+            img_prog_bg = frames_array[time] - progressive_background
+            # apply sobel filter
+            edges_prog_bg = filters.sobel(img_prog_bg)
+            #  booleanize with certain threshold alpha
+            edges_prog_bg = edges_prog_bg > edges_prog_bg * alpha
+            # erode edges and fill in holes
+            edges_prog_bg = ndimage.binary_erosion(edges_prog_bg)
+            edges_prog_bg = binary_fill_holes(edges_prog_bg)
+
+            labeled_samples = edges_lin_bg + edges_prog_bg
+            # props = regionprops(labeled_samples, intensity_image=frames[0])
+
+            video_with_label[time] = labeled_samples
+
+        return video_with_label
+
+    # when disable spatial tracking (default)
+    else:
+        labeled_samples = None
+        size = None
+        thres = None
+        props = None
+
+        # use canny edge detection method
+        if method is 'canny':
+            for size in range(15, 9, -1):
+                for thres in range(1500, 900, -100):
+                    edges = feature.canny(frames[0]/thres)
+
+                    # fig = plt.figure(2)  # for debugging
+                    # plt.imshow(edges)
+                    # plt.show()
+
+                    filled_samples = binary_fill_holes(edges)
+                    cl_samples = remove_small_objects(filled_samples, min_size=size)
+                    labeled_samples = label(cl_samples)
+                    props = regionprops(labeled_samples, intensity_image=frames[0])
+
+                    # fig = plt.figure(3)
+                    # plt.imshow(filled_samples)  # for debugging
+
+                    if len(props) == n_samples:
+                        break
+        #             if thres == 1000 and len(props) != n_samples:
+        #                 print('Not all the samples are being recognized with
+        #                 the set threshold range for size ',size)
+                if len(props) == n_samples:
+                    break
+            if size == 10 and thres == 1000 and len(props) != n_samples:
+                print('Not all the samples are being recognized with the set \
+                    minimum size and threshold range')
+            # plt.show()  # for debugging
+            return labeled_samples
+
+        # use sobel edge detection method
+        if method is 'sobel':
+            for size in range(15, 9, -1):
+                # use sobel
+                edges = filters.sobel(frames[0])
+                edges = edges > edges.mean() * 3  # booleanize data
 
                 # fig = plt.figure(2)  # for debugging
                 # plt.imshow(edges)
-                # plt.show()
+                # plt.colorbar()
 
+                #  fill holes and remove noise
                 filled_samples = binary_fill_holes(edges)
                 cl_samples = remove_small_objects(filled_samples, min_size=size)
                 labeled_samples = label(cl_samples)
@@ -119,64 +203,11 @@ def edge_detection(frames, n_samples, method='canny', track=False):
 
                 if len(props) == n_samples:
                     break
-    #             if thres == 1000 and len(props) != n_samples:
-    #                 print('Not all the samples are being recognized with
-    #                 the set threshold range for size ',size)
-            if len(props) == n_samples:
-                break
-        if size == 10 and thres == 1000 and len(props) != n_samples:
-            print('Not all the samples are being recognized with the set \
-                minimum size and threshold range')
-        # plt.show()  # for debugging
-        return labeled_samples
-
-    # use sobel edge detection method
-    if method is 'sobel':
-        for size in range(15, 9, -1):
-            # use sobel
-            edges = filters.sobel(frames[0])
-            edges = edges > edges.mean() * 2  # booleanize data
-
-            # fig = plt.figure(2)  # for debugging
-            # plt.imshow(edges)
-            # plt.colorbar()
-
-            #  fill holes and remove noise
-            filled_samples = binary_fill_holes(edges)
-            cl_samples = remove_small_objects(filled_samples, min_size=size)
-            labeled_samples = label(cl_samples)
-            props = regionprops(labeled_samples, intensity_image=frames[0])
-
-            # fig = plt.figure(3)
-            # plt.imshow(filled_samples)  # for debugging
-
-            if len(props) == n_samples:
-                break
-        if size == 10 and len(props) != n_samples:
-            print('Not all the samples are being recognized with the set \
-                minimum size and threshold range')
-        # plt.show()  # for debugging
-        return labeled_samples
-
-    if track:
-        video_length = len(frames)
-        background = frames.mean(0)
-
-        for time in range(video_length):
-            # remove background proportional to time in video
-            img = frames[time] - background * time / (video_length - 1)
-            # apply sobel filter
-            edges = filters.sobel(img)
-            # booleanize image, only values 3x higher than avg is True
-            edges = edges > edges.mean() * 3
-
-            #  fill holes and remove noise
-            filled_samples = binary_fill_holes(edges)
-            cl_samples = remove_small_objects(filled_samples, min_size=size)
-            labeled_samples = label(cl_samples)
-            props = regionprops(labeled_samples, intensity_image=frames[0])
-
-    return labeled_samples
+            if size == 10 and len(props) != n_samples:
+                print('Not all the samples are being recognized with the set \
+                    minimum size and threshold range')
+            # plt.show()  # for debugging
+            return labeled_samples
 
 
 # Function to determine centroids of all the samples
@@ -431,7 +462,7 @@ def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
 
 # Wrapping functions
 # Wrapping function to get the inflection point
-def inflection_temp(frames, n_rows, n_columns):
+def inflection_temp(frames, n_rows, n_columns, ver=1):
     '''
     Function to obtain sample temperature and plate temperature
     in every frame of the video using edge detection.
@@ -475,7 +506,13 @@ def inflection_temp(frames, n_rows, n_columns):
     # flip_frames = flip_frame(frames)
     # Use the function 'edge_detection' to detect edges, fill and
     # label the samples.
-    labeled_samples = edge_detection(frames, n_samples)
+    if ver is 1:
+        labeled_samples = edge_detection(frames, n_samples)
+    elif ver == 2:
+        track = True
+        labeled_samples = edge_detection(frames, n_samples, track=track)
+    else:
+        raise ValueError('Invalid version input')
 
     # Use the function 'regprop' to determine centroids of all the samples
     regprops = regprop(labeled_samples, frames, n_rows, n_columns)

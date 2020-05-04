@@ -17,7 +17,7 @@ for frame in frames:
     crop_frame.append(frame[35:85,40:120])
 plt.imshow(crop_frame[0])
 plt.colorbar()
-plt.show()
+# plt.show()
 
 
 # Using the wrapping function
