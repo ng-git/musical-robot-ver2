@@ -392,6 +392,7 @@ def inflection_temp(frames, n_rows, n_columns):
 
     '''
 
+
     # Determining the number of samples
     n_samples = n_columns * n_rows
     # Use the function 'flip_frame' to flip the frames horizontally
