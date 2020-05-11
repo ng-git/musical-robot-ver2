@@ -540,3 +540,42 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     m_df = pd.DataFrame({'Row': regprops[0].Row, 'Column': regprops[0].Column,
                         'Melting point': inf_temp})
     return sorted_regprops, s_temp, p_temp, inf_temp, m_df
+
+
+# Function to crop a square image
+def square_crop(frame, coordinate, half_length):
+    '''
+    takes a given frame, the coordinate of the centroid and the half length of the square. The
+    function will crop the frame into square with a given side length. If the crop part is out
+    of bounds, it will fit to the bounds of the given image.
+    
+    Parameters
+    -------------
+    frame: array
+       The array of the tiff file.
+    coordinate: array
+        the array of coordinates of the centroid. e.g. [x, y]
+    half_length: int
+       half side length of the square
+    -------------
+    
+    Returns
+    -------------
+    The array of the square image
+    -------------
+    
+    '''
+    x1 = int(coordinate[0] - half_length)
+    x2 = int(coordinate[0] + half_length)
+    y1 = int(coordinate[1] - half_length)
+    y2 = int(coordinate[1] + half_length)
+    if x1 < 0:
+        x1 = 0
+    if y1 < 0:
+        y1 = 0
+    if x2 > len(frame.T):
+        x2 = len(frame.T)
+    if y2 > len(frame):
+        y2 = len(frame)
+    crop_image = frame[y1:y2,x1:x2]
+    return crop_image
