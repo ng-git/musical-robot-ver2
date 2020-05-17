@@ -237,6 +237,11 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     regprops = {}
     n_samples = n_rows * n_columns
     unique_index = random.sample(range(100), n_samples)
+
+    print(type(labeled_samples))
+    print(len(labeled_samples))
+    print(type(frames))
+    print(len(frames))
     for i in range(len(frames)):
         props = regionprops(labeled_samples, intensity_image=frames[i])
         # Initializing arrays for all sample properties obtained from regprops.
@@ -508,9 +513,13 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     # label the samples.
     if ver is 1:
         labeled_samples = edge_detection(frames, n_samples)
+        print(len(labeled_samples))
+        print(type(labeled_samples))
     elif ver == 2:
         track = True
         labeled_samples = edge_detection(frames, n_samples, track=track)
+        print(len(labeled_samples))
+        print(type(labeled_samples))
     else:
         raise ValueError('Invalid version input')
 
