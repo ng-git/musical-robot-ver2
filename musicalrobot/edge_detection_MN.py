@@ -105,7 +105,7 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             frames_array = frames
 
         video_length = len(frames_array)
-        video_with_label = np.empty(frames_array.shape)
+        video_with_label = np.empty(frames_array.shape, dtype=int)
         background = frames_array.mean(0)
         progressive_background = 0
         alpha = 2
@@ -116,10 +116,12 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             # apply sobel filter
             edges_lin_bg = filters.sobel(img_lin_bg)
             #  booleanize with certain threshold alpha
-            edges_lin_bg = edges_lin_bg > edges_lin_bg * alpha
-            # erode edges and fill in holes
+            edges_lin_bg = edges_lin_bg > edges_lin_bg.mean() * alpha
+            # erode edges, fill in holes, remove stray pixels and label
             edges_lin_bg = ndimage.binary_erosion(edges_lin_bg)
             edges_lin_bg = binary_fill_holes(edges_lin_bg)
+            edges_lin_bg = remove_small_objects(edges_lin_bg, min_size=2)
+            edges_lin_bg = label(edges_lin_bg)
 
             # find progressive background
             if time is 0:
@@ -131,10 +133,12 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             # apply sobel filter
             edges_prog_bg = filters.sobel(img_prog_bg)
             #  booleanize with certain threshold alpha
-            edges_prog_bg = edges_prog_bg > edges_prog_bg * alpha
-            # erode edges and fill in holes
+            edges_prog_bg = edges_prog_bg > edges_prog_bg.mean() * alpha
+            # erode edges, fill in holes, remove stray pixels and label
             edges_prog_bg = ndimage.binary_erosion(edges_prog_bg)
             edges_prog_bg = binary_fill_holes(edges_prog_bg)
+            edges_prog_bg = remove_small_objects(edges_prog_bg, min_size=2)
+            edges_prog_bg = label(edges_prog_bg)
 
             labeled_samples = edges_lin_bg + edges_prog_bg
             # props = regionprops(labeled_samples, intensity_image=frames[0])
@@ -238,12 +242,14 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     n_samples = n_rows * n_columns
     unique_index = random.sample(range(100), n_samples)
 
-    print(type(labeled_samples))
-    print(len(labeled_samples))
-    print(type(frames))
-    print(len(frames))
     for i in range(len(frames)):
-        props = regionprops(labeled_samples, intensity_image=frames[i])
+        if len(labeled_samples) is 3:
+            props = regionprops(labeled_samples[i], intensity_image=frames[i])
+        elif len(labeled_samples) is 2:
+            props = regionprops(labeled_samples, intensity_image=frames[i])
+        else:
+            raise ValueError('Invalid labeled samples dimension')
+
         # Initializing arrays for all sample properties obtained from regprops.
         row = np.zeros(len(props)).astype(int)
         column = np.zeros(len(props)).astype(int)

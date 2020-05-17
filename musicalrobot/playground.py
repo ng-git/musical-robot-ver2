@@ -9,6 +9,7 @@ from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, binary_erosion
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.segmentation import find_boundaries, mark_boundaries
+from skimage.measure import regionprops
 
 from sklearn.preprocessing import normalize, binarize
 import math
@@ -23,8 +24,8 @@ frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  
 # frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
 # frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
 
-print(frames.shape)
-print(type(frames))
+# print(frames.shape)
+# print(type(frames))
 
 crop_frame = []
 for frame in frames:
@@ -137,10 +138,15 @@ plt.imshow(mag1)
 # plt.imshow(mag1)
 # plt.show()
 
+labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
+# print(labeled_samples.dtype, len(labeled_samples))
+# plt.imshow(labeled_samples[12])
+# plt.show()
+regionprops(labeled_samples[0], intensity_image=crop_frame[0])
 
 # Plotting the original image with the samples
 # and centroid and plate location
-sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
+# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
 
 print('done!')
 # plt.imshow(crop_frame[0])
@@ -148,10 +154,6 @@ print('done!')
 # plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
 # plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 # plt.show()
-
-# plt.scatter(sorted_regprops[0]['Plate_coord'],sorted_regprops[0]['Row'],c='orange',s=6)
-# plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
-# plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
 
 
 # plt.show()
