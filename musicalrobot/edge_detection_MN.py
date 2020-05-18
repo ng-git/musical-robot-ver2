@@ -144,6 +144,7 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             #  make the boolean mask for the for frame
             if time is 0:
                 boolean_mask = ~ndimage.binary_erosion(combined_samples)
+                # boolean_mask = ~combined_samples
 
             # labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
             # labeled_samples = binary_fill_holes(labeled_samples, structure=np.ones((2,2)))
@@ -156,18 +157,6 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             unique, counts = np.unique(labeled_samples, return_counts=True)
             label_dict = dict(zip(unique, counts))
 
-            # in case of extra label identify
-            if len(label_dict) > n_samples+1:
-                # keep removing smaller labels until matching with n_samples
-                while len(label_dict) > n_samples+1:
-                    temp = min(label_dict.values())
-                    labeled_samples = remove_small_objects(labeled_samples, min_size=temp+1)
-                    unique, counts = np.unique(labeled_samples, return_counts=True)
-                    label_dict = dict(zip(unique, counts))
-
-                # print('excess:', time, val)
-                counter += 1
-
             #  in case of missing label
             if len(label_dict) < n_samples+1:
                 # keep eroding to separate the samples
@@ -178,6 +167,18 @@ def edge_detection(frames, n_samples, method='canny', track=False):
                     label_dict = dict(zip(unique, counts))
                 # print('missing:', time)
                 missing += 1
+
+            # in case of extra label identify
+            if len(label_dict) > n_samples + 1:
+                # keep removing smaller labels until matching with n_samples
+                while len(label_dict) > n_samples + 1:
+                    temp = min(label_dict.values())
+                    labeled_samples = remove_small_objects(labeled_samples, min_size=temp + 1)
+                    unique, counts = np.unique(labeled_samples, return_counts=True)
+                    label_dict = dict(zip(unique, counts))
+
+                # print('excess:', time, val)
+                counter += 1
 
             video_with_label[time] = labeled_samples
         # print(counter)
@@ -313,15 +314,19 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             plate_coord[c] = column[c]+radius[c]+3
             c = c + 1
-        print(i)
-        regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
-                                    'Plate_temp(cK)': plate,
-                                    'Radius': radius,
-                                    'Plate_coord': plate_coord,
-                                    'Area': area, 'Perim': perim,
-                                    'Sample_temp(cK)': intensity,
-                                    'unique_index': unique_index},
-                                dtype=np.float64)
+        try:
+            regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
+                                        'Plate_temp(cK)': plate,
+                                        'Radius': radius,
+                                        'Plate_coord': plate_coord,
+                                        'Area': area, 'Perim': perim,
+                                        'Sample_temp(cK)': intensity,
+                                        'unique_index': unique_index},
+                                    dtype=np.float64)
+        except ValueError:
+            print('Wrong number of samples are being detected in frame %d' % i)
+            continue
+
         if len(regprops[i]) != n_samples:
             print('Wrong number of samples are being detected in frame %d' % i)
         regprops[i].sort_values(['Column', 'Row'], inplace=True)
@@ -557,13 +562,11 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     # label the samples.
     if ver is 1:
         labeled_samples = edge_detection(frames, n_samples)
-        print(len(labeled_samples))
-        print(type(labeled_samples))
+        # print(len(labeled_samples), type(labeled_samples))
     elif ver == 2:
         track = True
         labeled_samples = edge_detection(frames, n_samples, track=track)
-        print(len(labeled_samples))
-        print(type(labeled_samples))
+        # print(len(labeled_samples), type(labeled_samples))
     else:
         raise ValueError('Invalid version input')
 
