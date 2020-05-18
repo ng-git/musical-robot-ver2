@@ -322,68 +322,56 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             # plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             # plate_coord[c] = column[c]+radius[c]+3
             # c = c + 1
-
-            # new version of multiple pixel calculation (CW)
-            intensity_single_sample = None
-            plate_single_sample = None
-            # for each sample (from one to nine)
+             
             for sample in range(len(column)):
-                a=[]
-                for row in range(len(labeled_samples)):
-                    x=labeled_samples[row]
-                    get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-                    number=get_indexes(sample+1,x)
-                    a.append(number)
-                    while [] in a:
-                        a.remove([])
-                    
-                    # the following is for the range of the crop rectangle
-                    # new_data1 is for the left side of the crop rectangle
-                    new_data1=[]
-                    for i in range(len(a)):
-                        new_data1.append(min(a[i]))
-                    
-                    # new_data2 is for the right side of the crop rectangle
-                    new_data2=[]
-                    for i in range(len(a)):
-                        new_data2.append(max(a[i]))
-                        
-                    # so the range of the "column" of the crop rectangle would be from "new_data1" to "new_data2"
-                # a_2
-                a_2=[]
-                for dot in range(len(column)):
-                    e=[]
-                    for row in range(len(labeled_samples)):
-                        x=labeled_samples[row].tolist()
-                        get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-                        number=np.sum(frames[i][row][get_indexes(dot+1,x)])
-                        e.append(number)
-                    final_sum=np.sum(e)
-                    a_2.append(final_sum)
-
-                b=[]
-                for row in range(len(labeled_samples)):
-                    o=labeled_samples[row]
-                    get_indexes = lambda o, os: [i for (y, i) in zip(os, range(len(os))) if o == y]
-                    root=get_indexes(sample+1,o)
-                    if root != [] :
-                        b.append(row)
-                crop_area = (np.max(b)-np.min(b)+1)*(max(new_data2)-min(new_data1)+1)
-                envir_area = crop_area - area[sample]
+                
+                #This part is for getting the range of the crop rectangle
+                loc_index = np.argwhere(labeled_samples==(sample+1))
+                left_side_column = min(loc_index[:,0])
+                right_side_column = max(loc_index[:,0])
+                left_side_row = min(loc_index[:,1])
+                right_side_row = max(loc_index[:,1])
+   
+                #This part is for gettng the total sample temp and then get the average temp
+                sample_temp = []
+            
+                for loc_index_len in range(len(loc_index)) :
+                
+                    x_coordinate = loc_index[loc_index_len].tolist()[0]
+                    y_coordinate = loc_index[loc_index_len].tolist()[1]
     
-                c=[]
-                for k in range(np.max(b)-np.min(b)+1):
-                    for j in range(max(new_data2)-min(new_data1)+1):
-                        crop_temp = frames[i][np.min(b)+k][min(new_data1)+j]
-                        c.append(crop_temp)
-                crop_total = sum(c)
-                envir_total_temp = crop_total - a_2[sample]
-                plate_single_sample = round(envir_total_temp/envir_area)
-                intensity_single_sample = a_2[sample] / area[sample]
+                    result=crop_frame[0][x_coordinate][y_coordinate]
+                    sample_temp.append(result)
+                    sum_temp_sample = np.sum(sample_temp)
+                    intensity = sum_temp_sample/area[sample]
+    
+                #This part is getting the environment temperature
+                envir_area = (right_side_column-left_side_column+1)*(right_side_row-left_side_row+1)-area[sample]
+    
+                #First, get the total temperature in the range crop rectangle
+                total_rectangle_temp_list = []
+                for j in range(right_side_column-left_side_column+1):
+                    for k in range(right_side_row-left_side_row+1):
+                    crop_temp = crop_frame[0][left_side_column+j][left_side_row+k]
+                    total_rectangle_temp_list.append(crop_temp)
+                
+                #Next, use the result from the last step to minus the sum_temp_sample, and you can get the sum_temp_envir
+                total_rectangle_temp = np.sum(total_rectangle_temp_list)
+                sum_temp_envir = total_rectangle_temp - sum_temp_sample
+                plate = sum_temp_envir/envir_area
+        
+    
+    
+        try:
+            regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
+                                        'Plate_temp(cK)': plate,
+                                        'Radius': radius,
+                                        'Plate_coord': plate_coord,
+                                        'Area': area, 'Perim': perim,
+                                        'Sample_temp(cK)': intensity,
+                                        'unique_index': unique_index},
+                                    dtype=np.float64)
 
-                # store the sample's temp for updating
-                intensity[sample] = intensity_single_sample
-                plate[sample] = plate_single_sample
         try:
             regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
                                         'Plate_temp(cK)': plate,
