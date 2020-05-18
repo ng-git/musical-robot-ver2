@@ -107,9 +107,12 @@ def edge_detection(frames, n_samples, method='canny', track=False):
         video_length = len(frames_array)
         video_with_label = np.empty(frames_array.shape, dtype=int)
         background = frames_array.mean(0)
-        progressive_background = 0
+        progressive_background = None
         alpha = 2
-
+        counter = 0
+        missing = 0
+        boolean_mask = None
+        prev_frame = None
         for time in range(video_length):
             # remove background proportional to time in video
             img_lin_bg = frames_array[time] - background * time / (video_length - 1)
@@ -117,11 +120,9 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             edges_lin_bg = filters.sobel(img_lin_bg)
             #  booleanize with certain threshold alpha
             edges_lin_bg = edges_lin_bg > edges_lin_bg.mean() * alpha
-            # erode edges, fill in holes, remove stray pixels and label
-            edges_lin_bg = ndimage.binary_erosion(edges_lin_bg)
+            # erode edges, fill in holes
+            edges_lin_bg = ndimage.binary_erosion(edges_lin_bg, mask=boolean_mask)
             edges_lin_bg = binary_fill_holes(edges_lin_bg)
-            edges_lin_bg = remove_small_objects(edges_lin_bg, min_size=2)
-            edges_lin_bg = label(edges_lin_bg)
 
             # find progressive background
             if time is 0:
@@ -134,17 +135,53 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             edges_prog_bg = filters.sobel(img_prog_bg)
             #  booleanize with certain threshold alpha
             edges_prog_bg = edges_prog_bg > edges_prog_bg.mean() * alpha
-            # erode edges, fill in holes, remove stray pixels and label
-            edges_prog_bg = ndimage.binary_erosion(edges_prog_bg)
+            # erode edges, fill in holes
+            edges_prog_bg = ndimage.binary_erosion(edges_prog_bg, mask=boolean_mask)
             edges_prog_bg = binary_fill_holes(edges_prog_bg)
-            edges_prog_bg = remove_small_objects(edges_prog_bg, min_size=2)
-            edges_prog_bg = label(edges_prog_bg)
 
-            labeled_samples = edges_lin_bg + edges_prog_bg
-            # props = regionprops(labeled_samples, intensity_image=frames[0])
+            # combining
+            combined_samples = edges_lin_bg + edges_prog_bg
+            #  make the boolean mask for the for frame
+            if time is 0:
+                boolean_mask = ~ndimage.binary_erosion(combined_samples)
+
+            # labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
+            # labeled_samples = binary_fill_holes(labeled_samples, structure=np.ones((2,2)))
+
+            # remove stray pixels and label
+            combined_samples = remove_small_objects(combined_samples, min_size=2)
+            labeled_samples = label(combined_samples)
+
+            # confirm matching labels vs n_samples
+            unique, counts = np.unique(labeled_samples, return_counts=True)
+            label_dict = dict(zip(unique, counts))
+
+            # in case of extra label identify
+            if len(label_dict) > n_samples+1:
+                # keep removing smaller labels until matching with n_samples
+                while len(label_dict) > n_samples+1:
+                    temp = min(label_dict.values())
+                    labeled_samples = remove_small_objects(labeled_samples, min_size=temp+1)
+                    unique, counts = np.unique(labeled_samples, return_counts=True)
+                    label_dict = dict(zip(unique, counts))
+
+                # print('excess:', time, val)
+                counter += 1
+
+            #  in case of missing label
+            if len(label_dict) < n_samples+1:
+                # keep eroding to separate the samples
+                while len(label_dict) < n_samples+1:
+                    labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
+                    labeled_samples = label(labeled_samples)
+                    unique, counts = np.unique(labeled_samples, return_counts=True)
+                    label_dict = dict(zip(unique, counts))
+                # print('missing:', time)
+                missing += 1
 
             video_with_label[time] = labeled_samples
-
+        # print(counter)
+        # print(missing)
         return video_with_label
 
     # when disable spatial tracking (default)
@@ -243,9 +280,9 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     unique_index = random.sample(range(100), n_samples)
 
     for i in range(len(frames)):
-        if len(labeled_samples) is 3:
+        if len(labeled_samples.shape) is 3:
             props = regionprops(labeled_samples[i], intensity_image=frames[i])
-        elif len(labeled_samples) is 2:
+        elif len(labeled_samples.shape) is 2:
             props = regionprops(labeled_samples, intensity_image=frames[i])
         else:
             raise ValueError('Invalid labeled samples dimension')
@@ -276,6 +313,7 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             plate_coord[c] = column[c]+radius[c]+3
             c = c + 1
+        print(i)
         regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
                                     'Plate_temp(cK)': plate,
                                     'Radius': radius,
@@ -283,7 +321,7 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                                     'Area': area, 'Perim': perim,
                                     'Sample_temp(cK)': intensity,
                                     'unique_index': unique_index},
-                                   dtype=np.float64)
+                                dtype=np.float64)
         if len(regprops[i]) != n_samples:
             print('Wrong number of samples are being detected in frame %d' % i)
         regprops[i].sort_values(['Column', 'Row'], inplace=True)
