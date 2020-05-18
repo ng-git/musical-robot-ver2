@@ -301,29 +301,32 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         c = 0
         for prop in props:         
             row=None
-            column=None
+            # column=None
             plate=None
             radius=None
             plate_coord=None
             perim=None
             intensity=None
             unique_index=None
-           # row[c] = int(prop.centroid[0])
+            # row[c] = int(prop.centroid[0])
             column[c] = int(prop.centroid[1])
             # print(y[c])
             area[c] = prop.area
-            #perim[c] = prop.perimeter
-            #radius[c] = prop.equivalent_diameter/2
+            # perim[c] = prop.perimeter
+            # radius[c] = prop.equivalent_diameter/2
             # TODO modify this circular cropping to rectangular
-            #rr, cc = circle(row[c], column[c], radius = radius[c]/3)
-            #intensity[c] = np.mean(frames[i][rr,cc])
+            # rr, cc = circle(row[c], column[c], radius = radius[c]/3)
+            # intensity[c] = np.mean(frames[i][rr,cc])
 
             # TODO: Modify this line for plate temp
-            #plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
-            #plate_coord[c] = column[c]+radius[c]+3
-            #c = c + 1
-            
-            
+            # plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
+            # plate_coord[c] = column[c]+radius[c]+3
+            # c = c + 1
+
+            # new version of multiple pixel calculation (CW)
+            intensity_single_sample = None
+            plate_single_sample = None
+            # for each sample (from one to nine)
             for sample in range(len(column)):
                 a=[]
                 for row in range(len(labeled_samples)):
@@ -334,33 +337,30 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                     while [] in a:
                         a.remove([])
                     
-                    #the following is for the range of the crop rectangle
-                    #new_data1 is for the left side of the crop rectangle
+                    # the following is for the range of the crop rectangle
+                    # new_data1 is for the left side of the crop rectangle
                     new_data1=[]
                     for i in range(len(a)):
                         new_data1.append(min(a[i]))
                     
-                    #new_data2 is for the right side of the crop rectangle
+                    # new_data2 is for the right side of the crop rectangle
                     new_data2=[]
                     for i in range(len(a)):
                         new_data2.append(max(a[i]))
                         
-                    #so the range of the "column" of the crop rectangle would be from "new_data1" to "new_data2"
-   
-    
-               #a_2
+                    # so the range of the "column" of the crop rectangle would be from "new_data1" to "new_data2"
+                # a_2
                 a_2=[]
                 for dot in range(len(column)):
                     e=[]
                     for row in range(len(labeled_samples)):
                         x=labeled_samples[row].tolist()
                         get_indexes = lambda x, xs: [i for (y, i) in zip(xs, range(len(xs))) if x == y]
-                        number=np.sum(crop_frame[0][row][get_indexes(dot+1,x)])
+                        number=np.sum(frames[i][row][get_indexes(dot+1,x)])
                         e.append(number)
                     final_sum=np.sum(e)
                     a_2.append(final_sum)
 
-   
                 b=[]
                 for row in range(len(labeled_samples)):
                     o=labeled_samples[row]
@@ -372,16 +372,18 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                 envir_area = crop_area - area[sample]
     
                 c=[]
-                for i in range(np.max(b)-np.min(b)+1):
+                for k in range(np.max(b)-np.min(b)+1):
                     for j in range(max(new_data2)-min(new_data1)+1):
-                        crop_temp = crop_frame[0][np.min(b)+i][min(new_data1)+j]
+                        crop_temp = frames[i][np.min(b)+k][min(new_data1)+j]
                         c.append(crop_temp)
                 crop_total = sum(c)
                 envir_total_temp = crop_total - a_2[sample]
-                envir_average_temp = round(envir_total_temp/envir_area)
-        
-    
-    
+                plate_single_sample = round(envir_total_temp/envir_area)
+                intensity_single_sample = a_2[sample] / area[sample]
+
+                # store the sample's temp for updating
+                intensity[sample] = intensity_single_sample
+                plate[sample] = plate_single_sample
         try:
             regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
                                         'Plate_temp(cK)': plate,
