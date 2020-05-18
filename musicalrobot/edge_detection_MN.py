@@ -280,6 +280,8 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     n_samples = n_rows * n_columns
     unique_index = random.sample(range(100), n_samples)
 
+    missing = 0
+
     for i in range(len(frames)):
         if len(labeled_samples.shape) is 3:
             props = regionprops(labeled_samples[i], intensity_image=frames[i])
@@ -322,14 +324,19 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                                         'Area': area, 'Perim': perim,
                                         'Sample_temp(cK)': intensity,
                                         'unique_index': unique_index},
-                                    dtype=np.float64)
+                                       dtype=np.float64)
         except ValueError:
-            print('Wrong number of samples are being detected in frame %d' % i)
+            # print('Wrong number of samples detected in frame %d' % i)
+            missing += 1
             continue
 
         if len(regprops[i]) != n_samples:
             print('Wrong number of samples are being detected in frame %d' % i)
         regprops[i].sort_values(['Column', 'Row'], inplace=True)
+
+    if missing > 0:
+        print(str(missing) + ' frames skipped due to missing samples')
+
     return regprops
 
 
@@ -362,6 +369,8 @@ def sort_regprops(regprops, n_columns, n_rows):
     # The samples are pipetted out top to bottom from left to right.
     # The order of the samples in the dataframe
     # should match the order of pipetting.
+
+    missing = 0
     for j in range(0, n_columns):
         df = regprops[0][j*n_rows:(j+1)*n_rows].sort_values(['Row'])
         sorted_rows.append(df)
@@ -370,8 +379,18 @@ def sort_regprops(regprops, n_columns, n_rows):
     # The unique index is the sum of row and column coordinates.
     reorder_index = regprops[0].unique_index
     for k in range(0, len(regprops)):
-        regprops[k].set_index('unique_index', inplace=True)
-        sorted_regprops[k] = regprops[k].reindex(reorder_index)
+        # print(k)
+        try:
+            regprops[k].set_index('unique_index', inplace=True)
+            sorted_regprops[k] = regprops[k].reindex(reorder_index)
+        except KeyError:
+            # print('Skip frame ' + str(k) + ' due to missing sample')
+            missing += 1
+            pass
+
+    if missing > 0:
+        print(str(missing) + ' frames skipped due to missing samples')
+
     return sorted_regprops
 
 
