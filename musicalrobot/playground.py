@@ -19,11 +19,12 @@ import cv2
 # Importing the required modules
 from musicalrobot import irtemp
 from musicalrobot import edge_detection_MN as ed
+from musicalrobot import edge_detection_MN_ver2 as ed2
 from musicalrobot import pixel_analysis as pa
 
-# frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
+frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
 # frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
-frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
+# frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
 
 print(frames.shape)
 # print(type(frames))
@@ -148,36 +149,37 @@ mag1 = mag1 > mag1.mean() * alpha
 
 # Plotting the original image with the samples
 # and centroid and plate location
-sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
+# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
 # print('done!')
 frame = 886
-# plt.imshow(crop_frame[frame])
-# plt.scatter(sorted_regprops[frame]['Plate_coord'],sorted_regprops[frame]['Row'],c='orange',s=6)
-# plt.scatter(sorted_regprops[frame]['Column'],sorted_regprops[frame]['Row'],s=6,c='red')
-# plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
-# plt.show()
 
+n_rows = 3
+n_columns = 3
+labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
+regprops = ed2.regprop(labeled_samples, crop_frame, n_rows, n_columns)
+# sorted_regprops = ed2.sort_regprops(regprops, n_columns, n_rows)
+print('done!')
 # Plotting the temperature profile of a sample against the temperature profile
 # of the plate at a location next to the sample.
-sample_id = 5
-f_1 = plt.figure(1)
-y = s_temp[sample_id]
-y = signal.savgol_filter(y, 101, 3)
-plt.plot(p_temp[sample_id], y)
-plt.ylabel('Temperature of the sample($^\circ$C)')
-plt.xlabel('Temperature of the well plate($^\circ$C)')
-plt.title('Temperature of the sample against the temperature of the plate')
-plt.axis([30, 55, 30, 55])
-plt.grid()
+# sample_id = 5
+# f_1 = plt.figure(1)
+# y = s_temp[sample_id]
+# y = signal.savgol_filter(y, 101, 3)
+# plt.plot(p_temp[sample_id], y)
+# plt.ylabel('Temperature of the sample($^\circ$C)')
+# plt.xlabel('Temperature of the well plate($^\circ$C)')
+# plt.title('Temperature of the sample against the temperature of the plate')
+# plt.axis([30, 55, 30, 55])
+# plt.grid()
 
-sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
-f_2 = plt.figure(2)
-plt.plot(p_temp[sample_id], s_temp[sample_id])
-plt.ylabel('Temperature of the sample($^\circ$C)')
-plt.xlabel('Temperature of the well plate($^\circ$C)')
-plt.title('Temperature of the sample against the temperature of the plate')
-plt.axis([30, 55, 30, 55])
-plt.grid()
+# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
+# f_2 = plt.figure(2)
+# plt.plot(p_temp[sample_id], s_temp[sample_id])
+# plt.ylabel('Temperature of the sample($^\circ$C)')
+# plt.xlabel('Temperature of the well plate($^\circ$C)')
+# plt.title('Temperature of the sample against the temperature of the plate')
+# plt.axis([30, 55, 30, 55])
+# plt.grid()
 
 plt.show()
 

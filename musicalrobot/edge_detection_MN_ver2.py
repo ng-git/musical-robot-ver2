@@ -280,6 +280,8 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     n_samples = n_rows * n_columns
     unique_index = random.sample(range(100), n_samples)
 
+    missing = 0
+
     for i in range(len(frames)):
         if len(labeled_samples.shape) is 3:
             props = regionprops(labeled_samples[i], intensity_image=frames[i])
@@ -340,7 +342,7 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                     x_coordinate = loc_index[loc_index_len].tolist()[0]
                     y_coordinate = loc_index[loc_index_len].tolist()[1]
     
-                    result=crop_frame[0][x_coordinate][y_coordinate]
+                    result=frames[i][x_coordinate][y_coordinate]
                     sample_temp.append(result)
                     sum_temp_sample = np.sum(sample_temp)
                     intensity = sum_temp_sample/area[sample]
@@ -352,25 +354,13 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
                 total_rectangle_temp_list = []
                 for j in range(right_side_column-left_side_column+1):
                     for k in range(right_side_row-left_side_row+1):
-                    crop_temp = crop_frame[0][left_side_column+j][left_side_row+k]
-                    total_rectangle_temp_list.append(crop_temp)
+                        crop_temp = frames[i][left_side_column+j][left_side_row+k]
+                        total_rectangle_temp_list.append(crop_temp)
                 
                 #Next, use the result from the last step to minus the sum_temp_sample, and you can get the sum_temp_envir
                 total_rectangle_temp = np.sum(total_rectangle_temp_list)
                 sum_temp_envir = total_rectangle_temp - sum_temp_sample
                 plate = sum_temp_envir/envir_area
-        
-    
-    
-        try:
-            regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
-                                        'Plate_temp(cK)': plate,
-                                        'Radius': radius,
-                                        'Plate_coord': plate_coord,
-                                        'Area': area, 'Perim': perim,
-                                        'Sample_temp(cK)': intensity,
-                                        'unique_index': unique_index},
-                                    dtype=np.float64)
 
         try:
             regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
