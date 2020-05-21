@@ -300,8 +300,24 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         plate = np.zeros(len(props), dtype=np.float64)
         plate_coord = np.zeros(len(props))
 
+        unsorted_label = np.zeros((len(props), 4)).astype(int)
+        sorted_label = np.zeros((len(props), 4)).astype(int)
+
+        # collect data on centroid
+        for item in range(len(props)):
+            unsorted_label[item, 0] = int(props[item].centroid[0])
+            unsorted_label[item, 1] = int(props[item].centroid[1])
+            unsorted_label[item, 2] = np.unique(labeled_samples[i])[item + 1]
+
+        # sort label based on euclidean distance
+        for item in range(len(props)):
+            unsorted_label[item, 3] = np.power(unsorted_label[item, 0] + unsorted_label[:, 0].min(), 2) + np.power(
+                unsorted_label[item, 1] - unsorted_label[:, 1].min(), 2)
+            sorted_label = unsorted_label[unsorted_label[:, 3].argsort()]
+
         c = 0
-        for prop in props:         
+        for item in range(len(sorted_label[:, 2])):
+            prop = props[item]
             row=None
             # column=None
             plate=None
@@ -324,7 +340,7 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
             # plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
             # plate_coord[c] = column[c]+radius[c]+3
             # c = c + 1
-             
+
             for sample in range(len(column)):
                 
                 #This part is for getting the range of the crop rectangle

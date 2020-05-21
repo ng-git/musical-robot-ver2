@@ -20,6 +20,7 @@ from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from scipy.interpolate import BSpline
 from irtemp import centikelvin_to_celsius
+from scipy import signal
 
 import matplotlib.pyplot as plt
 from scipy import ndimage
@@ -300,21 +301,73 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         plate = np.zeros(len(props), dtype=np.float64)
         plate_coord = np.zeros(len(props))
 
+        unsorted_label = np.zeros((len(props), 5)).astype(int)
+        sorted_label = np.zeros((len(props), 4)).astype(int)
+
+        # collect data on centroid
+        for item in range(len(props)):
+            unsorted_label[item, 0] = int(props[item].centroid[0])
+            unsorted_label[item, 1] = int(props[item].centroid[1])
+            unsorted_label[item, 3] = item
+            unsorted_label[item, 4] = np.unique(labeled_samples[i])[item+1]
+
+        # sort label based on euclidean distance
+        for item in range(len(props)):
+            unsorted_label[item, 2] = np.power(unsorted_label[item, 0] + unsorted_label[:, 0].min(), 2) + np.power(
+                unsorted_label[item, 1] - unsorted_label[:, 1].min(), 2)
+            sorted_label = unsorted_label[unsorted_label[:, 2].argsort()]
+
         c = 0
-        for prop in props:
+        for item in range(len(props)):
+            prop = props[sorted_label[item, 3]]
+        # c = 0
+        # for prop in props:
             row[c] = int(prop.centroid[0])
             column[c] = int(prop.centroid[1])
             # print(y[c])
             area[c] = prop.area
-            perim[c] = prop.perimeter
-            radius[c] = prop.equivalent_diameter/2
+            # perim[c] = prop.perimeter
+            # radius[c] = prop.equivalent_diameter/2
             # TODO modify this circular cropping to rectangular
-            rr, cc = circle(row[c], column[c], radius = radius[c]/3)
-            intensity[c] = np.mean(frames[i][rr,cc])
+            # rr, cc = circle(row[c], column[c], radius = radius[c]/3)
+            # intensity[c] = np.mean(frames[i][rr,cc])
+            # # TODO: Modify this line for plate temp
+            # plate[c] = frames[i][row[c]][column[c] + int(radius[c]) + 3]
+            # plate_coord[c] = column[c] + radius[c] + 3
 
-            # TODO: Modify this line for plate temp
-            plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
-            plate_coord[c] = column[c]+radius[c]+3
+            loc_index = np.argwhere(labeled_samples[i] == sorted_label[item, 4])
+            left_side_column = min(loc_index[:, 0]) - 1
+            right_side_column = max(loc_index[:, 0]) + 1
+            left_side_row = min(loc_index[:, 1]) - 1
+            right_side_row = max(loc_index[:, 1]) + 1
+
+            # This part is for gettng the total temp and then get the average temp in each samples
+            sample_temp = []
+            for loc_index_len in range(len(loc_index)):
+                x_coordinate = loc_index[loc_index_len].tolist()[0]
+                y_coordinate = loc_index[loc_index_len].tolist()[1]
+
+                result = frames[i][x_coordinate][y_coordinate]
+                sample_temp.append(result)
+            sum_temp_sample = np.sum(sample_temp)
+            intensity[c] = sum_temp_sample / area[c]
+
+            # This part is getting the environment temperature
+            envir_area = (right_side_column - left_side_column + 1) * (right_side_row - left_side_row + 1) - area[c]
+
+            # First, get the total temperature in the range crop rectangle
+            total_rectangle_temp_list = []
+            for j in range(right_side_column - left_side_column + 1):
+                for k in range(right_side_row - left_side_row + 1):
+                    crop_temp = frames[i][left_side_column + j][left_side_row + k]
+                    total_rectangle_temp_list.append(crop_temp)
+
+            # Next, use the result from the last step to minus the sum_temp_sample, and
+            # you can get the sum_temp_envir
+            total_rectangle_temp = np.sum(total_rectangle_temp_list)
+            sum_temp_envir = total_rectangle_temp - sum_temp_sample
+            plate[c] = sum_temp_envir / envir_area
+
             c = c + 1
         try:
             regprops[i] = pd.DataFrame({'Row': row, 'Column': column,

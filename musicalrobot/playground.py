@@ -18,8 +18,10 @@ import cv2
 
 # Importing the required modules
 from musicalrobot import irtemp
+from musicalrobot import edge_detection as edOG
 from musicalrobot import edge_detection_MN as ed
 from musicalrobot import edge_detection_MN_ver2 as ed2
+from musicalrobot import edge_detection_MN_ver3 as ed3
 from musicalrobot import pixel_analysis as pa
 
 frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
@@ -155,15 +157,36 @@ frame = 886
 
 n_rows = 3
 n_columns = 3
-labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
-regprops = ed2.regprop(labeled_samples, crop_frame, n_rows, n_columns)
+# labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
+#
+# f = 0
+# props = regionprops(labeled_samples[f], intensity_image=crop_frame[f])
+
+# row = np.zeros(len(props)).astype(int)
+# column = np.zeros(len(props)).astype(int)
+# unsorted = np.zeros((len(props),4)).astype(int)
+#
+# for item in range(len(props)):
+#     unsorted[item, 0] = int(props[item].centroid[0])
+#     unsorted[item, 1] = int(props[item].centroid[1])
+#     unsorted[item, 2] = np.unique(labeled_samples[f])[item+1]
+#
+# for item in range(len(props)):
+#     unsorted[item, 3] = np.power(unsorted[item, 0]+unsorted[:,0].min(),2) + np.power(unsorted[item, 1]-unsorted[:, 1].min(),2)
+#     sorted = unsorted[unsorted[:,3].argsort()]
+# print(props[0:].centroid[0])
+# regprops = ed3.regprop(labeled_samples, crop_frame, n_rows, n_columns)
 # sorted_regprops = ed2.sort_regprops(regprops, n_columns, n_rows)
+# plt.imshow(labeled_samples[4])
+# plt.show()
+
 print('done!')
 # Plotting the temperature profile of a sample against the temperature profile
 # of the plate at a location next to the sample.
-# sample_id = 5
-# f_1 = plt.figure(1)
-# y = s_temp[sample_id]
+sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
+sample_id = 7
+f_1 = plt.figure(1)
+y = s_temp[sample_id]
 # y = signal.savgol_filter(y, 101, 3)
 # plt.plot(p_temp[sample_id], y)
 # plt.ylabel('Temperature of the sample($^\circ$C)')
@@ -171,8 +194,19 @@ print('done!')
 # plt.title('Temperature of the sample against the temperature of the plate')
 # plt.axis([30, 55, 30, 55])
 # plt.grid()
+print(inf_temp)
 
-# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
+# Plotting the original image with the samples
+# and centroid and plate location
+for time in range(0, 800):
+    plt.imshow(crop_frame[time])
+    # plt.scatter(sorted_regprops[time]['Plate_coord'],sorted_regprops[time]['Row'],c='orange',s=6)
+    plt.scatter(sorted_regprops[time]['Column'],sorted_regprops[time]['Row'],s=6,c='red')
+    plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
+    plt.pause(.001)
+    plt.draw()
+    f_1.clear()
+# sorted_regprops2, s_temp, p_temp, inf_temp, m_df = edOG.inflection_temp(crop_frame, 3, 3)
 # f_2 = plt.figure(2)
 # plt.plot(p_temp[sample_id], s_temp[sample_id])
 # plt.ylabel('Temperature of the sample($^\circ$C)')
@@ -180,6 +214,7 @@ print('done!')
 # plt.title('Temperature of the sample against the temperature of the plate')
 # plt.axis([30, 55, 30, 55])
 # plt.grid()
+# print(inf_temp)
 
 plt.show()
 
