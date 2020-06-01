@@ -269,7 +269,7 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         number_of_sample = len(props)
         #This part is for revising the wrong label order
         ppo = regionprops(labeled_samples[1], intensity_image=frames[1])
-        ppo[ma].centroid[0]
+        # ppo[ma].centroid[0]
         for ma in range(number_of_sample):
             yoyo1_yc = ppo[ma].centroid[0]
             yoyo1_xc = ppo[ma].centroid[1]
