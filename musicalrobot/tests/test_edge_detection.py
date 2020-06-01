@@ -188,3 +188,19 @@ def test_inflection_temp():
     assert len(m_df) == n_samples, 'Inflection temperatures obtained for wrong number of samples'
     return
 
+def test_square_crop():
+    '''Test for square crop function.'''
+    file_name = ('../musical-robot/musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')
+    frames = edge_detection.input_file(file_name)
+    half_length = 10
+    if coordinate = [-1, 0]:
+        assert square_crop(frames[0], coordinate, half_length) > 0, 'the crop area is out of bounds'
+    elif coordinate = [0, -1]:
+        assert square_crop(frames[0], coordinate, half_length) > 0, 'the crop area is out of bounds'
+    elif coordinate = [-1, -1]:
+        assert square_crop(frames[0], coordinate, half_length) > 0, 'the crop area is out of bounds'
+    else coordinate = [0, -1]:
+        assert square_crop(frames[0], coordinate, half_length) > 0, 'the crop area is out of bounds'
+    
+    assert
+    return
