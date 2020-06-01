@@ -596,9 +596,52 @@ def square_crop_the_file(file_path):
     The array of cropped frames of the image.
     -------------
     '''
-    frames = ed.input_file(file_path)
+    frames = input_file(file_path)
     crop_frame = []
     for frame in frames:
         crop_frame.append(square_crop(frame, [85, 55], 20))
     return crop_frame
 
+
+def fixed_crop_the_file(file_path):
+    '''
+    takes an image file path as input and then returns the array of cropped frames of the image.
+    
+    Parameters
+    -------------
+    file_path: String
+       The image file path.
+    -------------
+    
+    Returns
+    -------------
+    The array of cropped frames of the image.
+    -------------
+    '''
+    frames = input_file(file_path)
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame[35:85,40:120])
+    return crop_frame
+
+
+def not_crop_the_file(file_path):
+    '''
+    takes an image file path as input and then returns the array of cropped frames of the image.
+    
+    Parameters
+    -------------
+    file_path: String
+       The image file path.
+    -------------
+    
+    Returns
+    -------------
+    The array of cropped frames of the image.
+    -------------
+    '''
+    frames = input_file(file_path)
+    crop_frame = []
+    for frame in frames:
+        crop_frame.append(frame)
+    return crop_frame
