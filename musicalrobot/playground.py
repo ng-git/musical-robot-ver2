@@ -9,6 +9,7 @@ from skimage.measure import label
 from skimage.morphology import remove_small_objects, erosion, binary_erosion
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.segmentation import find_boundaries, mark_boundaries
+from skimage.measure import regionprops
 
 from sklearn.preprocessing import normalize, binarize
 import math
@@ -19,12 +20,12 @@ from musicalrobot import irtemp
 from musicalrobot import edge_detection_MN as ed
 from musicalrobot import pixel_analysis as pa
 
-# frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
-frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
+frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
+# frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
 # frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
 
-print(frames.shape)
-print(type(frames))
+# print(frames.shape)
+# print(type(frames))
 
 crop_frame = []
 for frame in frames:
@@ -127,134 +128,143 @@ mag1 = filters.sobel(result[0])
 mag1 = mag1 > mag1.mean() * alpha
 plt.imshow(mag1)
 
-fig = plt.figure(2)
+# fig = plt.figure(2)
 # labeled_img = label(mag1)
 # border = find_boundaries(labeled_img, mode='inner')
-mag1 = erosion(mag1)
+# mag1 = erosion(mag1)
 # mag1 = mag1 > mag1.mean() * alpha
 
 # mag1 = binary_fill_holes(mag1)
-plt.imshow(mag1)
+# plt.imshow(mag1)
 # plt.show()
 
+labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
+# print(labeled_samples.dtype, len(labeled_samples))
+# plt.imshow(labeled_samples[12])
+# plt.show()
+regionprops(labeled_samples[0], intensity_image=crop_frame[0])
 
 # Plotting the original image with the samples
 # and centroid and plate location
-# plt.imshow(flip_frames[0])
+# sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
+
+print('done!')
+# plt.imshow(crop_frame[0])
 # plt.scatter(sorted_regprops[0]['Plate_coord'],sorted_regprops[0]['Row'],c='orange',s=6)
 # plt.scatter(sorted_regprops[0]['Column'],sorted_regprops[0]['Row'],s=6,c='red')
 # plt.title('Sample centroid and plate locations at which the temperature profile is monitored')
+# plt.show()
 
 
 # plt.show()
 
-fig = plt.figure(3)
-fig_canny = plt.figure(4)
-time = [0, int(0.2*len(result)), int(0.4*len(result)), int(0.6*len(result)), int(0.8*len(result)), len(result)-1]
-edge = True
-row = 8
-col = 5
-alpha = 2
-for i in range(5):
-    img_raw = result[time[i]]
-    ax = fig.add_subplot(row, col, i + 1)
-    if i is 0:
-        ax.set_ylabel('OG')
-    ax.imshow(img_raw)
-
-    # sobel
-    mag1 = filters.sobel(img_raw)
-    if edge:
-        mag1 = mag1 > mag1.mean() * alpha
-        mag1 = ndimage.binary_erosion(mag1)
-        mag1 = binary_fill_holes(mag1)
-        # mag1 = remove_small_objects(mag1, 15)
-    ax = fig.add_subplot(row, col, i + 6)
-    if i is 0:
-        ax.set_ylabel('sobel')
-    ax.imshow(mag1)
-
-    mag1_bg = filters.sobel(img_raw - result.mean(0))
-    if edge:
-        mag1 = mag1_bg > mag1_bg.mean() * alpha
-        mag1 = ndimage.binary_erosion(mag1)
-        mag1_bg = binary_fill_holes(mag1)
-        # mag1 = remove_small_objects(mag1, 15)
-    ax = fig.add_subplot(row, col, i + 11)
-    if i is 0:
-        ax.set_ylabel('bg removal')
-    ax.imshow(mag1_bg)
-
-    # linear background removal
-    mag1_lin = filters.sobel(result[time[i]] - result.mean(0)*time[i] / (len(result) - 1))
-    if edge:
-        mag1 = mag1_lin > mag1_lin.mean() * alpha
-        mag1 = ndimage.binary_erosion(mag1)
-        mag1_lin = binary_fill_holes(mag1)
-    # mag1_lin = mag1 + mag1_bg
-        # mag1 = remove_small_objects(mag1,15)
-    ax = fig.add_subplot(row, col, i + 16)
-    if i is 0:
-        ax.set_ylabel('lin bg')
-    ax.imshow(mag1_lin)
-
-    # progressive background removal
-    progressive_background = None
-    if time[i] is 0:
-        progressive_background = 0
-    else:
-        progressive_background = result[0:time[i]].mean(0)
-    mag1_prog = filters.sobel(img_raw - progressive_background)
-    if edge:
-        mag1 = mag1_prog > mag1_prog.mean() * alpha
-        mag1 = ndimage.binary_erosion(mag1)
-        mag1_prog = binary_fill_holes(mag1)
-        # mag1 = remove_small_objects(mag1, 15)
-    ax = fig.add_subplot(row, col, i + 21)
-    if i is 0:
-        ax.set_ylabel('prog bg')
-    ax.imshow(mag1_prog)
-
-    # combined background
-    ax = fig.add_subplot(row, col, i + 26)
-    if i is 0:
-        ax.set_ylabel('prog & linear')
-    ax.imshow(mag1_prog + mag1_lin)
-
-    # combined background
-    ax = fig.add_subplot(row, col, i + 31)
-    if i is 0:
-        ax.set_ylabel('prog & bg')
-    ax.imshow(mag1_prog + mag1_bg)
-
-    # combined background all
-    mag1 = filters.sobel(result[time[i]] - result.mean(0)*np.power(time[i]/(len(result) - 1),2))
-    if edge:
-        mag1 = mag1 > mag1.mean() * alpha
-        mag1 = ndimage.binary_erosion(mag1)
-        mag1 = binary_fill_holes(mag1)
-    ax = fig.add_subplot(row, col, i + 36)
-    if i is 0:
-        ax.set_ylabel('quad bg')
-    ax.imshow(mag1)
-
-    # canny
-    mag1 = feature.canny(img_raw / 1500)
-    mag1 = binary_fill_holes(mag1)
-    mag1 = remove_small_objects(mag1, 15)
-    ax = fig_canny.add_subplot(2, 5, i +1)
-    if i is 0:
-        ax.set_ylabel('canny method')
-    ax.imshow(mag1)
-
-    # canny with background removal
-    mag1 = feature.canny((img_raw - result.mean(0)) / 1500)
-    mag1 = binary_fill_holes(mag1)
-    mag1 = remove_small_objects(mag1, 15)
-    ax = fig_canny.add_subplot(2, 5, i + 6)
-    if i is 0:
-        ax.set_ylabel('canny & bg')
-    ax.imshow(mag1)
+# fig = plt.figure(3)
+# fig_canny = plt.figure(4)
+# time = [0, int(0.2*len(result)), int(0.4*len(result)), int(0.6*len(result)), int(0.8*len(result)), len(result)-1]
+# edge = True
+# row = 8
+# col = 5
+# alpha = 2
+# for i in range(5):
+#     img_raw = result[time[i]]
+#     ax = fig.add_subplot(row, col, i + 1)
+#     if i is 0:
+#         ax.set_ylabel('OG')
+#     ax.imshow(img_raw)
+#
+#     # sobel
+#     mag1 = filters.sobel(img_raw)
+#     if edge:
+#         mag1 = mag1 > mag1.mean() * alpha
+#         mag1 = ndimage.binary_erosion(mag1)
+#         mag1 = binary_fill_holes(mag1)
+#         # mag1 = remove_small_objects(mag1, 15)
+#     ax = fig.add_subplot(row, col, i + 6)
+#     if i is 0:
+#         ax.set_ylabel('sobel')
+#     ax.imshow(mag1)
+#
+#     mag1_bg = filters.sobel(img_raw - result.mean(0))
+#     if edge:
+#         mag1 = mag1_bg > mag1_bg.mean() * alpha
+#         mag1 = ndimage.binary_erosion(mag1)
+#         mag1_bg = binary_fill_holes(mag1)
+#         # mag1 = remove_small_objects(mag1, 15)
+#     ax = fig.add_subplot(row, col, i + 11)
+#     if i is 0:
+#         ax.set_ylabel('bg removal')
+#     ax.imshow(mag1_bg)
+#
+#     # linear background removal
+#     mag1_lin = filters.sobel(result[time[i]] - result.mean(0)*time[i] / (len(result) - 1))
+#     if edge:
+#         mag1 = mag1_lin > mag1_lin.mean() * alpha
+#         mag1 = ndimage.binary_erosion(mag1)
+#         mag1_lin = binary_fill_holes(mag1)
+#     # mag1_lin = mag1 + mag1_bg
+#         # mag1 = remove_small_objects(mag1,15)
+#     ax = fig.add_subplot(row, col, i + 16)
+#     if i is 0:
+#         ax.set_ylabel('lin bg')
+#     ax.imshow(mag1_lin)
+#
+#     # progressive background removal
+#     progressive_background = None
+#     if time[i] is 0:
+#         progressive_background = 0
+#     else:
+#         progressive_background = result[0:time[i]].mean(0)
+#     mag1_prog = filters.sobel(img_raw - progressive_background)
+#     if edge:
+#         mag1 = mag1_prog > mag1_prog.mean() * alpha
+#         mag1 = ndimage.binary_erosion(mag1)
+#         mag1_prog = binary_fill_holes(mag1)
+#         # mag1 = remove_small_objects(mag1, 15)
+#     ax = fig.add_subplot(row, col, i + 21)
+#     if i is 0:
+#         ax.set_ylabel('prog bg')
+#     ax.imshow(mag1_prog)
+#
+#     # combined background
+#     ax = fig.add_subplot(row, col, i + 26)
+#     if i is 0:
+#         ax.set_ylabel('prog & linear')
+#     ax.imshow(mag1_prog + mag1_lin)
+#
+#     # combined background
+#     ax = fig.add_subplot(row, col, i + 31)
+#     if i is 0:
+#         ax.set_ylabel('prog & bg')
+#     ax.imshow(mag1_prog + mag1_bg)
+#
+#     # combined background all
+#     mag1 = filters.sobel(result[time[i]] - result.mean(0)*np.power(time[i]/(len(result) - 1),2))
+#     if edge:
+#         mag1 = mag1 > mag1.mean() * alpha
+#         mag1 = ndimage.binary_erosion(mag1)
+#         mag1 = binary_fill_holes(mag1)
+#     ax = fig.add_subplot(row, col, i + 36)
+#     if i is 0:
+#         ax.set_ylabel('quad bg')
+#     ax.imshow(mag1)
+#
+#     # canny
+#     mag1 = feature.canny(img_raw / 1500)
+#     mag1 = binary_fill_holes(mag1)
+#     mag1 = remove_small_objects(mag1, 15)
+#     ax = fig_canny.add_subplot(2, 5, i +1)
+#     if i is 0:
+#         ax.set_ylabel('canny method')
+#     ax.imshow(mag1)
+#
+#     # canny with background removal
+#     mag1 = feature.canny((img_raw - result.mean(0)) / 1500)
+#     mag1 = binary_fill_holes(mag1)
+#     mag1 = remove_small_objects(mag1, 15)
+#     ax = fig_canny.add_subplot(2, 5, i + 6)
+#     if i is 0:
+#         ax.set_ylabel('canny & bg')
+#     ax.imshow(mag1)
 
 # row = result[0].shape[0]
 # col = result[0].shape[1]
@@ -263,4 +273,4 @@ for i in range(5):
 # a[i] = mag1
 # print(a.shape)
 
-plt.show()
+# plt.show()
