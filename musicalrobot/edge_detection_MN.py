@@ -20,6 +20,7 @@ from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from scipy.interpolate import BSpline
 from irtemp import centikelvin_to_celsius
+from scipy import signal
 
 import matplotlib.pyplot as plt
 from scipy import ndimage
@@ -105,20 +106,23 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             frames_array = frames
 
         video_length = len(frames_array)
-        video_with_label = np.empty(frames_array.shape)
+        video_with_label = np.empty(frames_array.shape, dtype=int)
         background = frames_array.mean(0)
-        progressive_background = 0
+        progressive_background = None
         alpha = 2
-
+        counter = 0
+        missing = 0
+        boolean_mask = None
+        prev_frame = None
         for time in range(video_length):
             # remove background proportional to time in video
             img_lin_bg = frames_array[time] - background * time / (video_length - 1)
             # apply sobel filter
             edges_lin_bg = filters.sobel(img_lin_bg)
             #  booleanize with certain threshold alpha
-            edges_lin_bg = edges_lin_bg > edges_lin_bg * alpha
-            # erode edges and fill in holes
-            edges_lin_bg = ndimage.binary_erosion(edges_lin_bg)
+            edges_lin_bg = edges_lin_bg > edges_lin_bg.mean() * alpha
+            # erode edges, fill in holes
+            edges_lin_bg = ndimage.binary_erosion(edges_lin_bg, mask=boolean_mask)
             edges_lin_bg = binary_fill_holes(edges_lin_bg)
 
             # find progressive background
@@ -131,16 +135,55 @@ def edge_detection(frames, n_samples, method='canny', track=False):
             # apply sobel filter
             edges_prog_bg = filters.sobel(img_prog_bg)
             #  booleanize with certain threshold alpha
-            edges_prog_bg = edges_prog_bg > edges_prog_bg * alpha
-            # erode edges and fill in holes
-            edges_prog_bg = ndimage.binary_erosion(edges_prog_bg)
+            edges_prog_bg = edges_prog_bg > edges_prog_bg.mean() * alpha
+            # erode edges, fill in holes
+            edges_prog_bg = ndimage.binary_erosion(edges_prog_bg, mask=boolean_mask)
             edges_prog_bg = binary_fill_holes(edges_prog_bg)
 
-            labeled_samples = edges_lin_bg + edges_prog_bg
-            # props = regionprops(labeled_samples, intensity_image=frames[0])
+            # combining
+            combined_samples = edges_lin_bg + edges_prog_bg
+            #  make the boolean mask for the for frame
+            if time is 0:
+                boolean_mask = ~ndimage.binary_erosion(combined_samples)
+                # boolean_mask = ~combined_samples
+
+            # labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
+            # labeled_samples = binary_fill_holes(labeled_samples, structure=np.ones((2,2)))
+
+            # remove stray pixels and label
+            combined_samples = remove_small_objects(combined_samples, min_size=2)
+            labeled_samples = label(combined_samples)
+
+            # confirm matching labels vs n_samples
+            unique, counts = np.unique(labeled_samples, return_counts=True)
+            label_dict = dict(zip(unique, counts))
+
+            #  in case of missing label
+            if len(label_dict) < n_samples+1:
+                # keep eroding to separate the samples
+                while len(label_dict) < n_samples+1:
+                    labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
+                    labeled_samples = label(labeled_samples)
+                    unique, counts = np.unique(labeled_samples, return_counts=True)
+                    label_dict = dict(zip(unique, counts))
+                # print('missing:', time)
+                missing += 1
+
+            # in case of extra label identify
+            if len(label_dict) > n_samples + 1:
+                # keep removing smaller labels until matching with n_samples
+                while len(label_dict) > n_samples + 1:
+                    temp = min(label_dict.values())
+                    labeled_samples = remove_small_objects(labeled_samples, min_size=temp + 1)
+                    unique, counts = np.unique(labeled_samples, return_counts=True)
+                    label_dict = dict(zip(unique, counts))
+
+                # print('excess:', time, val)
+                counter += 1
 
             video_with_label[time] = labeled_samples
-
+        # print(counter)
+        # print(missing)
         return video_with_label
 
     # when disable spatial tracking (default)
@@ -237,8 +280,18 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
     regprops = {}
     n_samples = n_rows * n_columns
     unique_index = random.sample(range(100), n_samples)
+
+    missing = 0
+    index = 0
+
     for i in range(len(frames)):
-        props = regionprops(labeled_samples, intensity_image=frames[i])
+        if len(labeled_samples.shape) is 3:
+            props = regionprops(labeled_samples[i], intensity_image=frames[i])
+        elif len(labeled_samples.shape) is 2:
+            props = regionprops(labeled_samples, intensity_image=frames[i])
+        else:
+            raise ValueError('Invalid labeled samples dimension')
+
         # Initializing arrays for all sample properties obtained from regprops.
         row = np.zeros(len(props)).astype(int)
         column = np.zeros(len(props)).astype(int)
@@ -249,33 +302,98 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         plate = np.zeros(len(props), dtype=np.float64)
         plate_coord = np.zeros(len(props))
 
+        unsorted_label = np.zeros((len(props), 5)).astype(int)
+        sorted_label = np.zeros((len(props), 4)).astype(int)
+
+        # collect data on centroid
+        for item in range(len(props)):
+            unsorted_label[item, 0] = int(props[item].centroid[0])
+            unsorted_label[item, 1] = int(props[item].centroid[1])
+            unsorted_label[item, 3] = item
+            unsorted_label[item, 4] = np.unique(labeled_samples[i])[item+1]
+
+        # sort label based on euclidean distance
+        for item in range(len(props)):
+            unsorted_label[item, 2] = np.power(unsorted_label[item, 0] + unsorted_label[:, 0].min(), 2) + np.power(
+                unsorted_label[item, 1] - unsorted_label[:, 1].min(), 2)
+            sorted_label = unsorted_label[unsorted_label[:, 2].argsort()]
+
         c = 0
-        for prop in props:
+        for item in range(len(props)):
+            prop = props[sorted_label[item, 3]]
+        # c = 0
+        # for prop in props:
             row[c] = int(prop.centroid[0])
             column[c] = int(prop.centroid[1])
             # print(y[c])
             area[c] = prop.area
-            perim[c] = prop.perimeter
-            radius[c] = prop.equivalent_diameter/2
+            # perim[c] = prop.perimeter
+            # radius[c] = prop.equivalent_diameter/2
             # TODO modify this circular cropping to rectangular
-            rr, cc = circle(row[c], column[c], radius = radius[c]/3)
-            intensity[c] = np.mean(frames[i][rr,cc])
+            # rr, cc = circle(row[c], column[c], radius = radius[c]/3)
+            # intensity[c] = np.mean(frames[i][rr,cc])
+            # # TODO: Modify this line for plate temp
+            # plate[c] = frames[i][row[c]][column[c] + int(radius[c]) + 3]
+            # plate_coord[c] = column[c] + radius[c] + 3
 
-            # TODO: Modify this line for plate temp
-            plate[c] = frames[i][row[c]][column[c]+int(radius[c])+3]
-            plate_coord[c] = column[c]+radius[c]+3
+            loc_index = np.argwhere(labeled_samples[i] == sorted_label[item, 4])
+            left_side_column = min(loc_index[:, 0]) - 1
+            right_side_column = max(loc_index[:, 0]) + 1
+            left_side_row = min(loc_index[:, 1]) - 1
+            right_side_row = max(loc_index[:, 1]) + 1
+
+            # This part is for gettng the total temp and then get the average temp in each samples
+            sample_temp = []
+            for loc_index_len in range(len(loc_index)):
+                x_coordinate = loc_index[loc_index_len].tolist()[0]
+                y_coordinate = loc_index[loc_index_len].tolist()[1]
+
+                result = frames[i][x_coordinate][y_coordinate]
+                sample_temp.append(result)
+            sum_temp_sample = np.sum(sample_temp)
+            intensity[c] = sum_temp_sample / area[c]
+
+            # This part is getting the environment temperature
+            envir_area = (right_side_column - left_side_column + 1) * (right_side_row - left_side_row + 1) - area[c]
+
+            # First, get the total temperature in the range crop rectangle
+            total_rectangle_temp_list = []
+            for j in range(right_side_column - left_side_column + 1):
+                for k in range(right_side_row - left_side_row + 1):
+                    crop_temp = frames[i][left_side_column + j][left_side_row + k]
+                    total_rectangle_temp_list.append(crop_temp)
+
+            # Next, use the result from the last step to minus the sum_temp_sample, and
+            # you can get the sum_temp_envir
+            total_rectangle_temp = np.sum(total_rectangle_temp_list)
+            sum_temp_envir = total_rectangle_temp - sum_temp_sample
+            plate[c] = sum_temp_envir / envir_area
+
             c = c + 1
-        regprops[i] = pd.DataFrame({'Row': row, 'Column': column,
-                                    'Plate_temp(cK)': plate,
-                                    'Radius': radius,
-                                    'Plate_coord': plate_coord,
-                                    'Area': area, 'Perim': perim,
-                                    'Sample_temp(cK)': intensity,
-                                    'unique_index': unique_index},
-                                   dtype=np.float64)
-        if len(regprops[i]) != n_samples:
+
+        try:
+            regprops[index] = pd.DataFrame({'Row': row, 'Column': column,
+                                        'Plate_temp(cK)': plate,
+                                        'Radius': radius,
+                                        'Plate_coord': plate_coord,
+                                        'Area': area, 'Perim': perim,
+                                        'Sample_temp(cK)': intensity,
+                                        'unique_index': unique_index},
+                                       dtype=np.float64)
+            regprops[index].sort_values(['Column', 'Row'], inplace=True)
+            index += 1
+        except ValueError:
+            # print('Wrong number of samples detected in frame %d' % i)
+            missing += 1
+            continue
+
+        if len(intensity) != n_samples:
             print('Wrong number of samples are being detected in frame %d' % i)
-        regprops[i].sort_values(['Column', 'Row'], inplace=True)
+
+
+    if missing > 0:
+        print(str(missing) + ' frames skipped due to missing samples')
+
     return regprops
 
 
@@ -308,6 +426,8 @@ def sort_regprops(regprops, n_columns, n_rows):
     # The samples are pipetted out top to bottom from left to right.
     # The order of the samples in the dataframe
     # should match the order of pipetting.
+
+    missing = 0
     for j in range(0, n_columns):
         df = regprops[0][j*n_rows:(j+1)*n_rows].sort_values(['Row'])
         sorted_rows.append(df)
@@ -315,9 +435,22 @@ def sort_regprops(regprops, n_columns, n_rows):
     # Creating an index to be used for reordering all the dataframes.
     # The unique index is the sum of row and column coordinates.
     reorder_index = regprops[0].unique_index
+    index = 0
     for k in range(0, len(regprops)):
-        regprops[k].set_index('unique_index', inplace=True)
-        sorted_regprops[k] = regprops[k].reindex(reorder_index)
+        # print(k)
+        try:
+            regprops[k].set_index('unique_index', inplace=True)
+            sorted_regprops[index] = regprops[k].reindex(reorder_index)
+            index += 1
+        except KeyError:
+            # sorted_regprops[k] = regprops[k-1].reindex(reorder_index)
+            # print('Skip frame ' + str(k) + ' due to missing sample')
+            missing += 1
+            continue
+
+    if missing > 0:
+        print(str(missing) + ' frames skipped due to missing samples')
+
     return sorted_regprops
 
 
@@ -348,10 +481,13 @@ def sample_temp(sorted_regprops, frames):
         temp_well = []
         plate_well_temp = []
         for i in range(len(frames)):
-            temp_well.append(centikelvin_to_celsius
-                             (list(sorted_regprops[i]['Sample_temp(cK)'])[j]))
-            plate_well_temp.append(centikelvin_to_celsius(list
-                                   (sorted_regprops[i]['Plate_temp(cK)'])[j]))
+            try:
+                temp_well.append(centikelvin_to_celsius
+                                 (list(sorted_regprops[i]['Sample_temp(cK)'])[j]))
+                plate_well_temp.append(centikelvin_to_celsius(list
+                                       (sorted_regprops[i]['Plate_temp(cK)'])[j]))
+            except KeyError:
+                continue
         temp.append(temp_well)
         plate_temp.append(plate_well_temp)
     return temp, plate_temp
@@ -508,9 +644,11 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     # label the samples.
     if ver is 1:
         labeled_samples = edge_detection(frames, n_samples)
+        # print(len(labeled_samples), type(labeled_samples))
     elif ver == 2:
         track = True
         labeled_samples = edge_detection(frames, n_samples, track=track)
+        # print(len(labeled_samples), type(labeled_samples))
     else:
         raise ValueError('Invalid version input')
 
@@ -645,3 +783,4 @@ def not_crop_the_file(file_path):
     for frame in frames:
         crop_frame.append(frame)
     return crop_frame
+
