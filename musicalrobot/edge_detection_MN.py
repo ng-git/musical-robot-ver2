@@ -160,23 +160,27 @@ def edge_detection(frames, n_samples, method='canny', track=False):
 
             #  in case of missing label
             if len(label_dict) < n_samples+1:
+                trial = 0
                 # keep eroding to separate the samples
-                while len(label_dict) < n_samples+1:
+                while len(label_dict) < n_samples+1 and trial < 10:
                     labeled_samples = ndimage.binary_erosion(labeled_samples, mask=boolean_mask)
                     labeled_samples = label(labeled_samples)
                     unique, counts = np.unique(labeled_samples, return_counts=True)
                     label_dict = dict(zip(unique, counts))
+                    trial += 1
                 # print('missing:', time)
                 missing += 1
 
             # in case of extra label identify
             if len(label_dict) > n_samples + 1:
+                trial = 0
                 # keep removing smaller labels until matching with n_samples
-                while len(label_dict) > n_samples + 1:
+                while len(label_dict) > n_samples + 1 and trial < 10:
                     temp = min(label_dict.values())
                     labeled_samples = remove_small_objects(labeled_samples, min_size=temp + 1)
                     unique, counts = np.unique(labeled_samples, return_counts=True)
                     label_dict = dict(zip(unique, counts))
+                    trial += 1
 
                 # print('excess:', time, val)
                 counter += 1

@@ -24,7 +24,9 @@ from musicalrobot import edge_detection_MN_ver2 as ed2
 from musicalrobot import edge_detection_MN_ver3 as ed3
 from musicalrobot import pixel_analysis as pa
 
-frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
+# frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
+# frames = ed.input_file('D:/wsl/DIRECT/musical-robot-ver2/musicalrobot/data_MN/10_17_19_DDA_shallow_plate.tiff')
+frames = ed.input_file('D:/wsl/DIRECT/musical-robot-ver2/musicalrobot/data_MN/8_15_19_Dodecanoic_acid.tiff')
 # frames = ed.input_file('../musicalrobot/data_MN/PPA_Melting_6_14_19.tiff')
 # frames = ed.input_file('../musicalrobot/data_MN/10_17_19_quinine_shallow_plate.tiff')
 
@@ -35,8 +37,9 @@ crop_frame = []
 for frame in frames:
     # frame = normalize(frame, norm='max')
     # frame = frame/frame.max()
-    crop_frame.append(frame[35:85, 40:120])
+    # crop_frame.append(frame[35:85, 40:120])
     # crop_frame.append(frame[20:100, 15:140])
+    crop_frame.append(frame[10:110, 15:160])
     # crop_frame.append(frame)
 
 # upsizing
@@ -50,39 +53,12 @@ filter_blurred_f = ndimage.gaussian_filter(crop_frame, 0.1)
 alpha = 0
 result = crop_frame + alpha * (crop_frame - filter_blurred_f)
 
-# plt.imshow(result[-1], cmap='Greys', vmin=32700, vmax=33000)
-# plt.figure(1)
-# plt.imshow(result[0])
-
-# CV method to remove background
-# file_path = "../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff"
-
-# cap = cv2.VideoCapture(file_path)
-# # cap = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
-# # print(cap.shape)
-# first_iter = True
-# result = None
-# while True:
-#     ret, frame = cap.read()
-#     if frame is None:
-#         break
-#
-#     if first_iter:
-#         avg = np.float32(frame)
-#         first_iter = False
-#
-#     cv2.accumulateWeighted(frame, avg, 0.005)
-#     result = cv2.convertScaleAbs(avg)
-#
-# plt.imshow(result)
-# plt.show()
-
 
 # plt.imshow(np.power(result[0],2), cmap='Greys')
 # plt.imshow(result[0] - result.mean(0))
 # plt.imshow(np.power(result[0] - result.mean(0),1), cmap='Greys')  # background removal
 
-
+# plt.imshow(crop_frame[0])
 # plt.show()
 
 # gaussian fiter
@@ -128,15 +104,6 @@ mag1 = filters.sobel(result[0])
 mag1 = mag1 > mag1.mean() * alpha
 # plt.imshow(mag1)
 
-# fig = plt.figure(2)
-# labeled_img = label(mag1)
-# border = find_boundaries(labeled_img, mode='inner')
-# mag1 = erosion(mag1)
-# mag1 = mag1 > mag1.mean() * alpha
-
-# mag1 = binary_fill_holes(mag1)
-# plt.imshow(mag1)
-# plt.show()
 
 # labeled_samples = ed.edge_detection(crop_frame, 9, track=True)
 # print(len(labeled_samples.shape), len(labeled_samples))
