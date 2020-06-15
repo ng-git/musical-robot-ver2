@@ -35,3 +35,11 @@ An example of adapting both the above mentioned techniques using the `musicalrob
 * Clone the repository on your machine using git clone https://github.com/pozzocapstone/musical-robot.git . This will create a copy of this repository on your machine.
 * Go to the repository folder using cd musical-robot.
 * Install the python dependencies by using pip install -r requirements.txt
+
+# musical-robot_vers2
+* create the label models for each images instead of using one single image to analyze whole tested pictures
+* revise the error in the label modules on order
+* can distinguish the sample and surrounding temperature even they have little difference
+* use multiple pixels calculation to improve the accuracy
+* compare the result with the previous version and also the real data by using standard deviation
+
