@@ -43,3 +43,22 @@ Components
 * machine learning model (?) that can estimate the approximate change points
 * OR some buffers on expected data - smooths and marks jumps, decreases, or unexpected spikes
 ```
+
+# vers2
+# Use Case 1
+## When there is only ittle difference between the samples and surrounding temperature 
+
+Components:
+```
+* create the label models for each images instead of using one single image to analyze whole tested pictures
+* use sobel edge detection instead of canny edge detection
+```
+
+# Use Case2
+## Aim on improving the accuracy of the result
+
+Components:
+```
+* use the mutiple pixels calculation to get the sample temperature
+* analysis by the standard deviation and also compare our result with the previous versoin and real data 
+```
