@@ -78,7 +78,7 @@ def flip_frame(frames):
 
 # Function to detect edges, fill and label the samples.
 def edge_detection(frames, n_samples, method='canny', track=False):
-    '''
+    """
     To detect the edges of the wells, fill and label them to
     determine their centroids.
 
@@ -89,13 +89,17 @@ def edge_detection(frames, n_samples, method='canny', track=False):
         sample temperature from.
     n_samples : Int
         The number of samples in the input video.
+    method : String
+        Edge detection algorithm to be used
+    track : Boolean
+        to enable spatial tracking (to be implemented with real-time in the future)
 
     Returns
     --------
     labeled_samples : Array
         All the samples in the frame are labeled
         so that they can be used as props to get pixel data.
-    '''
+    """
 
     # when enable spatial tracking
     if track:
@@ -108,12 +112,10 @@ def edge_detection(frames, n_samples, method='canny', track=False):
         video_length = len(frames_array)
         video_with_label = np.empty(frames_array.shape, dtype=int)
         background = frames_array.mean(0)
-        progressive_background = None
         alpha = 2
         counter = 0
         missing = 0
         boolean_mask = None
-        prev_frame = None
         for time in range(video_length):
             # remove background proportional to time in video
             img_lin_bg = frames_array[time] - background * time / (video_length - 1)
@@ -325,20 +327,10 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
         c = 0
         for item in range(len(props)):
             prop = props[sorted_label[item, 3]]
-        # c = 0
-        # for prop in props:
+
             row[c] = int(prop.centroid[0])
             column[c] = int(prop.centroid[1])
-            # print(y[c])
             area[c] = prop.area
-            # perim[c] = prop.perimeter
-            # radius[c] = prop.equivalent_diameter/2
-            # TODO modify this circular cropping to rectangular
-            # rr, cc = circle(row[c], column[c], radius = radius[c]/3)
-            # intensity[c] = np.mean(frames[i][rr,cc])
-            # # TODO: Modify this line for plate temp
-            # plate[c] = frames[i][row[c]][column[c] + int(radius[c]) + 3]
-            # plate_coord[c] = column[c] + radius[c] + 3
 
             loc_index = np.argwhere(labeled_samples[i] == sorted_label[item, 4])
             left_side_column = min(loc_index[:, 0]) - 1
@@ -393,7 +385,6 @@ def regprop(labeled_samples, frames, n_rows, n_columns):
 
         if len(intensity) != n_samples:
             print('Wrong number of samples are being detected in frame %d' % i)
-
 
     if missing > 0:
         print(str(missing) + ' frames skipped due to missing samples')
@@ -603,7 +594,7 @@ def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
 # Wrapping functions
 # Wrapping function to get the inflection point
 def inflection_temp(frames, n_rows, n_columns, ver=1):
-    '''
+    """
     Function to obtain sample temperature and plate temperature
     in every frame of the video using edge detection.
 
@@ -616,6 +607,8 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
         Number of rows of sample
     n_columns: List
         Number of columns of sample
+    ver: int
+        Number of detection version to be used
 
     Returns
     --------
@@ -636,8 +629,7 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     m_df : Dataframe
         A dataframe containing row and column coordinates of each sample
         and its respective inflection point obtained.
-
-    '''
+    """
 
     # Determining the number of samples
     n_samples = n_columns * n_rows
@@ -646,6 +638,8 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
     # flip_frames = flip_frame(frames)
     # Use the function 'edge_detection' to detect edges, fill and
     # label the samples.
+
+    # run the edge detection using version 1 or 2 based on user input
     if ver is 1:
         labeled_samples = edge_detection(frames, n_samples)
         # print(len(labeled_samples), type(labeled_samples))
@@ -686,7 +680,7 @@ def inflection_temp(frames, n_rows, n_columns, ver=1):
 
 # Function to crop a square image
 def square_crop(frame, coordinate, half_length):
-    '''
+    """
     takes a given frame, the coordinate of the centroid and the half length of the square. The
     function will crop the frame into square with a given side length. If the crop part is out
     of bounds, it will fit to the bounds of the given image.
@@ -706,7 +700,8 @@ def square_crop(frame, coordinate, half_length):
     The array of the square image
     -------------
     
-    '''
+    """
+
     x1 = int(coordinate[0] - half_length)
     x2 = int(coordinate[0] + half_length)
     y1 = int(coordinate[1] - half_length)
