@@ -109,3 +109,6 @@ venv.bak/
 # directories
 .idea/
 data_MN/
+
+# personal files
+musicalrobot/playground.py
