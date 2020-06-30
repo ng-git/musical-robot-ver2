@@ -19,7 +19,7 @@ import cv2
 # Importing the required modules
 from musicalrobot import irtemp
 from musicalrobot import edge_detection as edOG
-from musicalrobot import edge_detection_MN as ed
+from musicalrobot import edge_detection_ver2 as ed
 from musicalrobot import pixel_analysis as pa
 
 frames = ed.input_file('../musicalrobot/data/10_17_19_PPA_Shallow_plate.tiff')  # default
