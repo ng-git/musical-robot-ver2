@@ -132,7 +132,7 @@ n_columns = 3
 print('done!')
 # Plotting the temperature profile of a sample against the temperature profile
 # of the plate at a location next to the sample.
-sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3, ver=2)
+sorted_regprops, s_temp, p_temp, inf_temp, m_df = ed.inflection_temp(crop_frame, 3, 3)
 sorted_regprops_og, s_temp_og, p_temp_og, inf_temp_og, m_df_og = edOG.inflection_temp(crop_frame, 3, 3)
 sample_id = 7
 f_1 = plt.figure(1)
