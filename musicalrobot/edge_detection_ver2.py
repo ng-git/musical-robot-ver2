@@ -112,7 +112,7 @@ def edge_detection(frames, n_samples, method='canny', track=False):
         video_length = len(frames_array)
         video_with_label = np.empty(frames_array.shape, dtype=int)
         background = frames_array.mean(0)
-        alpha = 2
+        alpha = 2  # intensity threshold
         counter = 0
         missing = 0
         boolean_mask = None
@@ -593,7 +593,7 @@ def inflection_point(s_temp, p_temp, s_peaks, p_peaks):
 
 # Wrapping functions
 # Wrapping function to get the inflection point
-def inflection_temp(frames, n_rows, n_columns, ver=1):
+def inflection_temp(frames, n_rows, n_columns, ver=2):
     """
     Function to obtain sample temperature and plate temperature
     in every frame of the video using edge detection.
